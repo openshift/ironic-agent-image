@@ -1,3 +1,13 @@
 #!/bin/bash
 
-exec ironic-python-agent
+mkdir -p /etc/ironic-python-agent
+
+cat > /etc/ironic-python-agent/ironic-python-agent.conf <<EOF
+[DEFAULT]
+debug = True
+log-file = /var/log/ironic-python-agent.log
+use_stderr = True
+EOF
+
+exec ironic-python-agent \
+    --config-file /etc/ironic-python-agent/ironic-python-agent.conf
