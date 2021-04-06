@@ -1,0 +1,25 @@
+# Core dependencies
+chrony
+dosfstools
+e2fsprogs
+efibootmgr
+efivar
+gdisk
+ipmitool
+hdparm
+lshw
+mdadm
+nvme-cli
+openstack-ironic-python-agent
+parted
+psmisc
+qemu-img
+util-linux
+
+# Extra hardware dependencies (without benchmarks)
+biosdevname
+ethtool
+lldpad
+pciutils
+python3-hardware
+smartmontools
