@@ -1,7 +1,6 @@
-# Core dependencies
+biosdevname
 chrony
 dosfstools
-e2fsprogs
 efibootmgr
 efivar
 gdisk
@@ -13,13 +12,6 @@ nvme-cli
 openstack-ironic-python-agent
 parted
 psmisc
+python3-hardware
 qemu-img
 util-linux
-
-# Extra hardware dependencies (without benchmarks)
-biosdevname
-ethtool
-lldpad
-pciutils
-python3-hardware
-smartmontools
