@@ -1,7 +1,5 @@
 #!/bin/bash
 
-mkdir -p /etc/ironic-python-agent
-
 cat > /etc/ironic-python-agent/ironic-python-agent.conf <<EOF
 [DEFAULT]
 debug = True
@@ -9,5 +7,10 @@ log-file = /var/log/ironic-python-agent.log
 use_stderr = True
 EOF
 
+ARGS=
+if [[ -f "/etc/ironic-python-agent/ignition.conf" ]]; then
+    ARGS="--config-file /etc/ironic-python-agent/ignition.conf"
+fi
+
 exec ironic-python-agent \
-    --config-file /etc/ironic-python-agent/ironic-python-agent.conf
+    --config-file /etc/ironic-python-agent/ironic-python-agent.conf $ARGS

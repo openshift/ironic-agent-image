@@ -8,6 +8,7 @@ COPY ${PKGS_LIST} ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} /tmp/
 COPY prepare-image.sh patch-image.sh runironicagent /bin/
 
 RUN prepare-image.sh && \
+  mkdir -p /etc/ironic-python-agent && \
   rm -f /bin/prepare-image.sh
 
 ENTRYPOINT ["/bin/runironicagent"]

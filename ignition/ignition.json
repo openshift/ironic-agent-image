@@ -1,6 +1,6 @@
 {
   "ignition": {
-    "version": "3.2.0"
+    "version": "3.0.0"
   },
   "passwd": {
     "users": [
@@ -11,6 +11,12 @@
         ]
       }
     ]
+  },
+  "storage": {
+    "files": [{
+      "path": "/etc/ironic-python-agent.conf",
+      "contents": {"source": "data:;base64,%CONF%"}
+    }]
   },
   "systemd": {
     "units": [

@@ -5,8 +5,8 @@ Wants=network-online.target
 
 [Service]
 TimeoutStartSec=0
-ExecStartPre=/bin/podman pull %REGISTRY%/ironic-agent --tls-verify=false
-ExecStart=/bin/podman run --privileged --mount type=bind,src=/dev,dst=/dev --mount type=bind,src=/sys,dst=/sys --name ironic-agent ironic-agent
+ExecStartPre=/bin/podman pull %REGISTRY%/ironic-agent %PODMAN_FLAGS%
+ExecStart=/bin/podman run --privileged --mount type=bind,src=/etc/ironic-python-agent.conf,dst=/etc/ironic-python-agent/ignition.conf --mount type=bind,src=/dev,dst=/dev --mount type=bind,src=/sys,dst=/sys --name ironic-agent ironic-agent
 
 [Install]
 WantedBy=multi-user.target
