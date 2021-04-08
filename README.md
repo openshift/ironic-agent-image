@@ -11,7 +11,9 @@ a conventional Linux distribution, such as CentOS.
 
 So far it has **not** been tested with other [Metal3](http://metal3.io/)
 components, to experiment with it you'll need a pure Ironic installation, such
-as [Bifrost](https://docs.openstack.org/bifrost/latest/).
+as [Bifrost](https://docs.openstack.org/bifrost/latest/). Make sure to allocate
+enough RAM to the testing nodes, I have used 6 GiB (e.g. add `--memory 6144` to
+`./bifrost-cli testenv` invocation).
 
 You will need to enroll nodes using the
 [redfish-virtual-media](https://docs.openstack.org/ironic/latest/admin/drivers/redfish.html#virtual-media-boot)
