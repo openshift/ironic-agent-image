@@ -1,0 +1,94 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import json
+import os
+
+from ironic_lib import utils
+from ironic_python_agent import hardware
+from oslo_log import log
+
+LOG = log.getLogger()
+
+
+ARGSINFO = {
+    "ignition": {
+        "description": (
+            "Ignition JSON configuration to pass to the instance."
+        ),
+        "required": False,
+    },
+    "append_karg": {
+        "description": (
+            "List of kernel arguments to append."
+        ),
+        "required": False,
+    },
+    "delete_karg": {
+        "description": (
+            "List of kernel arguments to remove."
+        ),
+        "required": False,
+    },
+    "image_url": {
+        "description": (
+            "Use this URL instead of the built-in one."
+        ),
+        "required": False,
+    },
+}
+
+ROOT_MOUNT_PATH = '/mnt/coreos'
+
+
+class CoreOSInstallHardwareManager(hardware.HardwareManager):
+
+    HARDWARE_MANAGER_NAME = 'CoreOSInstallHardwareManager'
+    HARDWARE_MANAGER_VERSION = '1'
+
+    def evaluate_hardware_support(self):
+        return hardware.HardwareSupport.SERVICE_PROVIDER
+
+    def get_deploy_steps(self, node, ports):
+        return [
+            {
+                'step': 'install_coreos',
+                'priority': 0,
+                'interface': 'deploy',
+                'reboot_requested': False,
+                'argsinfo': ARGSINFO,
+            }
+        ]
+
+    def install_coreos(self, node, ports, ignition=None, append_karg=None,
+                       delete_karg=None, image_url=None):
+        root = hardware.dispatch_to_managers('get_os_install_device',
+                                             permit_refresh=True)
+        args = []
+
+        if ignition is not None:
+            dest = os.path.join(ROOT_MOUNT_PATH, 'tmp', 'ironic.ign')
+            with open(dest, 'wt') as fp:
+                json.dump(ignition, fp)
+            args += ['--ignition-file', '/tmp/ironic.ign']
+
+        if append_karg:
+            args += ['--append-karg', ','.join(append_karg)]
+
+        if delete_karg:
+            args += ['--delete-karg', ','.join(delete_karg)]
+
+        if image_url is not None:
+            args += ['--image-url', image_url]
+
+        utils.execute('chroot', ROOT_MOUNT_PATH,
+                      'coreos-installer', *args, root)

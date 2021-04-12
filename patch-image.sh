@@ -22,7 +22,7 @@ do
     git checkout FETCH_HEAD
 
     SKIP_GENERATE_AUTHORS=1 SKIP_WRITE_GIT_CHANGELOG=1 python3 setup.py sdist
-    pip3 install --prefix=/usr dist/*.tar.gz
+    pip3 install --prefix=/usr --no-index --no-deps dist/*.tar.gz
 done < "$patch_file"
 
 cd /
