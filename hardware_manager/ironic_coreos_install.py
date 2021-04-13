@@ -89,6 +89,8 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
         if image_url is not None:
             args += ['--image-url', image_url]
+        else:
+            args += ['--offline']
 
         utils.execute('chroot', ROOT_MOUNT_PATH,
                       'coreos-installer', 'install', *args, root)
