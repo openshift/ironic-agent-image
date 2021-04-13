@@ -15,6 +15,9 @@ as [Bifrost](https://docs.openstack.org/bifrost/latest/). Make sure to allocate
 enough RAM to the testing nodes, I have used 6 GiB (e.g. add `--memory 6144` to
 `./bifrost-cli testenv` invocation).
 
+Make sure you have [patch
+785372](https://review.opendev.org/c/openstack/ironic/+/785372) in your Ironic.
+
 You will need to enroll nodes using the
 [redfish-virtual-media](https://docs.openstack.org/ironic/latest/admin/drivers/redfish.html#virtual-media-boot)
 boot interface. PXE and iPXE will be supported eventually, but currently are
@@ -87,3 +90,38 @@ podman push ironic-agent localhost:5000/ironic-agent --tls-verify=false
 ```
 
 Now you're ready to inspect, clean and deploy nodes.
+
+### Using CoreOS installer (experimental)
+
+If you want to use `coreos-installer` instead of the standard Ironic deploy
+procedure, you need to switch to the `custom-agent` deploy interface from
+Ironic [patch 786033](https://review.opendev.org/c/openstack/ironic/+/786033)
+(and its parent patches):
+
+```
+baremetal node set <node> --deploy-interface custom-agent
+```
+
+Then prepare a custom deploy steps list in a YAML file, e.g.
+
+```yaml
+---
+- interface: deploy
+  step: install_coreos
+  priority: 50
+  args:
+    ignition:
+      ignition:
+        version: 3.0.0
+      passwd:
+        users:
+        - name: core
+          sshAuthorizedKeys:
+          - ssh-rsa AAAA ....
+```
+
+and use it when deploying:
+
+```
+baremetal node deploy <node> --deploy-steps /path/to/deploy/steps.yaml
+```
