@@ -91,4 +91,4 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
             args += ['--image-url', image_url]
 
         utils.execute('chroot', ROOT_MOUNT_PATH,
-                      'coreos-installer', *args, root)
+                      'coreos-installer', 'install', *args, root)
