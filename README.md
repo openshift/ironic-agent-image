@@ -108,7 +108,7 @@ Then prepare a custom deploy steps list in a YAML file, e.g.
 ---
 - interface: deploy
   step: install_coreos
-  priority: 50
+  priority: 80
   args:
     ignition:
       ignition:
