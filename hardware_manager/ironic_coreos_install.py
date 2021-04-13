@@ -94,6 +94,8 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
         command = ['chroot', ROOT_MOUNT_PATH,
                    'coreos-installer', 'install', *args, root]
-        LOG.info('Executing %s', command)
+        LOG.info('Executing CoreOS installer: %s', command)
         # NOTE(dtantsur): not using utils.execute because it swallows output
         subprocess.run(command, check=True)
+        LOG.info('Successfully installed via CoreOS installer on device %s',
+                 root)
