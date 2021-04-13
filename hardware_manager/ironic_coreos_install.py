@@ -12,8 +12,8 @@
 
 import json
 import os
+import subprocess
 
-from ironic_lib import utils
 from ironic_python_agent import hardware
 from oslo_log import log
 
@@ -92,5 +92,8 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         else:
             args += ['--offline']
 
-        utils.execute('chroot', ROOT_MOUNT_PATH,
-                      'coreos-installer', 'install', *args, root)
+        command = ['chroot', ROOT_MOUNT_PATH,
+                   'coreos-installer', 'install', *args, root]
+        LOG.info('Executing %s', command)
+        # NOTE(dtantsur): not using utils.execute because it swallows output
+        subprocess.run(command, check=True)
