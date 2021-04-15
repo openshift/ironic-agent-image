@@ -16,8 +16,15 @@ if [[ ! -z ${EXTRA_PKGS_LIST:-} ]]; then
     fi
 fi
 
+# Pbr pulls in Git (30+ MiB), but actually only uses it in development context.
+rpm -q git-core && rpm -e --nodeps git-core || true
+
 dnf clean all
 rm -rf /var/cache/{yum,dnf}/*
+
+# This goes last since it violates package integrity.
+rm -rf /var/log/anaconda /var/lib/dnf/history.* /usr/share/licenses/*
+
 if [[ ! -z ${PATCH_LIST:-} ]]; then
     if [[ -s "/tmp/${PATCH_LIST}" ]]; then
         /bin/patch-image.sh;
