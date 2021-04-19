@@ -108,6 +108,13 @@ Ironic [patch 786033](https://review.opendev.org/c/openstack/ironic/+/786033)
 baremetal node set <node> --deploy-interface custom-agent
 ```
 
+Until we fix validation, provide a fake image source (won't be used):
+
+```
+baremetal node set <node> \
+    --instance-info image_source=file:///httpboot/fcos-ipa.iso
+```
+
 Then prepare a custom deploy steps list in a YAML file, e.g.
 
 ```yaml
