@@ -11,7 +11,7 @@ RUN prepare-image.sh && \
   mkdir -p /etc/ironic-python-agent && \
   rm -f /bin/prepare-image.sh
 
-COPY hardware_manager /tmp/hardware_manager
+COPY hardware_manager /tmp/
 
 RUN PBR_VERSION=1.0 pip3 install --no-index --verbose --prefix=/usr /tmp/hardware_manager
 
