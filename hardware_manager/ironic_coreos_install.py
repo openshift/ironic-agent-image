@@ -45,6 +45,12 @@ ARGSINFO = {
         ),
         "required": False,
     },
+    "copy_network": {
+        "description": (
+            "Whether to copy network information from the ramdisk."
+        ),
+        "required": False,
+    },
 }
 
 ROOT_MOUNT_PATH = '/mnt/coreos'
@@ -70,7 +76,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         ]
 
     def install_coreos(self, node, ports, ignition=None, append_karg=None,
-                       delete_karg=None, image_url=None):
+                       delete_karg=None, image_url=None, copy_network=False):
         root = hardware.dispatch_to_managers('get_os_install_device',
                                              permit_refresh=True)
         args = []
@@ -91,6 +97,9 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
             args += ['--image-url', image_url]
         else:
             args += ['--offline']
+
+        if copy_network:
+            args += ['--copy-network']
 
         command = ['chroot', ROOT_MOUNT_PATH,
                    'coreos-installer', 'install', *args, root]
