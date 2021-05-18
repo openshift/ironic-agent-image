@@ -22,7 +22,7 @@ enough RAM to the testing nodes, I have used 6 GiB (e.g. add `--memory 6144` to
 `./bifrost-cli testenv` invocation).
 
 Make sure you have [patch
-785372](https://review.opendev.org/c/openstack/ironic/+/785372) in your Ironic.
+790472](https://review.opendev.org/c/openstack/ironic/+/790472) in your Ironic.
 
 You will need to enroll nodes using the
 [redfish-virtual-media](https://docs.openstack.org/ironic/latest/admin/drivers/redfish.html#virtual-media-boot)
@@ -97,44 +97,20 @@ podman push ironic-agent localhost:5000/ironic-agent --tls-verify=false
 
 Now you're ready to inspect, clean and deploy nodes.
 
-### Using CoreOS installer (experimental)
+### Using CoreOS installer
 
 If you want to use `coreos-installer` instead of the standard Ironic deploy
-procedure, you need to switch to the `custom-agent` deploy interface from
-Ironic [patch 786033](https://review.opendev.org/c/openstack/ironic/+/786033)
-(and its parent patches):
+procedure, you need to switch to the `custom-agent` deploy interface added
+(very) recently to Ironic:
 
 ```
 baremetal node set <node> --deploy-interface custom-agent
 ```
 
-Until we fix validation, provide a fake image source (won't be used):
+Then you can deploy with:
 
 ```
-baremetal node set <node> \
-    --instance-info image_source=file:///httpboot/fcos-ipa.iso
-```
-
-Then prepare a custom deploy steps list in a YAML file, e.g.
-
-```yaml
----
-- interface: deploy
-  step: install_coreos
-  priority: 80
-  args:
-    ignition:
-      ignition:
-        version: 3.0.0
-      passwd:
-        users:
-        - name: core
-          sshAuthorizedKeys:
-          - ssh-rsa AAAA ....
-```
-
-and use it when deploying:
-
-```
-baremetal node deploy <node> --deploy-steps /path/to/deploy/steps.yaml
+baremetal node deploy <node> \
+    --deploy-steps '[{"interface": "deploy", "step": "install_coreos", "priority": 80, "args": {}}]' \
+    --config-drive '{"user_data": {.. your ignition ..}}'
 ```
