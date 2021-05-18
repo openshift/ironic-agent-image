@@ -58,6 +58,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         args = ['--preserve-on-error']  # We have cleaning to do this
 
         if ignition:
+            LOG.debug('Will use ignition %s', ignition)
             dest = os.path.join(ROOT_MOUNT_PATH, 'tmp', 'ironic.ign')
             with open(dest, 'wt') as fp:
                 if isinstance(ignition, str):
