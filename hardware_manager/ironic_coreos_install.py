@@ -46,7 +46,6 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     def install_coreos(self, node, ports):
         root = hardware.dispatch_to_managers('get_os_install_device',
                                              permit_refresh=True)
-        args = []
         configdrive = node['instance_info'].get('configdrive') or {}
         if isinstance(configdrive, str):
             raise errors.DeploymentError(
@@ -55,6 +54,8 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
         meta_data = configdrive.get('meta_data') or {}
         ignition = configdrive.get('user_data')
+
+        args = ['--preserve-on-error']  # We have cleaning to do this
 
         if ignition:
             dest = os.path.join(ROOT_MOUNT_PATH, 'tmp', 'ironic.ign')
