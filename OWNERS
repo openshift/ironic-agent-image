@@ -4,8 +4,8 @@ approvers:
   - dhellmann
   - dtantsur
   - elfosardo
+  - iurygregory
   - hardys
-  - juliakreger
   - russellb
   - stbenjam
   - zaneb
@@ -15,8 +15,8 @@ reviewers:
   - dhellmann
   - dtantsur
   - elfosardo
+  - iurygregory
   - hardys
-  - juliakreger
   - russellb
   - zaneb
 
