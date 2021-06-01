@@ -4,9 +4,8 @@ approvers:
   - dhellmann
   - dtantsur
   - elfosardo
+  - iurygregory
   - hardys
-  - juliakreger
-  - russellb
   - stbenjam
   - zaneb
 reviewers:
@@ -15,9 +14,8 @@ reviewers:
   - dhellmann
   - dtantsur
   - elfosardo
+  - iurygregory
   - hardys
-  - juliakreger
-  - russellb
   - zaneb
 
 # Bugzilla Information
