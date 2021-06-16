@@ -14,44 +14,12 @@ import json
 import os
 import subprocess
 
+from ironic_python_agent import errors
 from ironic_python_agent import hardware
 from oslo_log import log
+import tenacity
 
 LOG = log.getLogger()
-
-
-ARGSINFO = {
-    "ignition": {
-        "description": (
-            "Ignition JSON configuration to pass to the instance."
-        ),
-        "required": False,
-    },
-    "append_karg": {
-        "description": (
-            "List of kernel arguments to append."
-        ),
-        "required": False,
-    },
-    "delete_karg": {
-        "description": (
-            "List of kernel arguments to remove."
-        ),
-        "required": False,
-    },
-    "image_url": {
-        "description": (
-            "Use this URL instead of the built-in one."
-        ),
-        "required": False,
-    },
-    "copy_network": {
-        "description": (
-            "Whether to copy network information from the ramdisk."
-        ),
-        "required": False,
-    },
-}
 
 ROOT_MOUNT_PATH = '/mnt/coreos'
 
@@ -71,40 +39,71 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
                 'priority': 0,
                 'interface': 'deploy',
                 'reboot_requested': False,
-                'argsinfo': ARGSINFO,
+                'argsinfo': {},
             }
         ]
 
-    def install_coreos(self, node, ports, ignition=None, append_karg=None,
-                       delete_karg=None, image_url=None, copy_network=False):
+    def install_coreos(self, node, ports):
         root = hardware.dispatch_to_managers('get_os_install_device',
                                              permit_refresh=True)
-        args = []
+        configdrive = node['instance_info'].get('configdrive') or {}
+        if isinstance(configdrive, str):
+            raise errors.DeploymentError(
+                "Cannot use a pre-rendered configdrive, please pass it "
+                "as JSON data")
 
-        if ignition is not None:
+        meta_data = configdrive.get('meta_data') or {}
+        ignition = configdrive.get('user_data')
+
+        args = ['--preserve-on-error']  # We have cleaning to do this
+
+        if ignition:
+            LOG.debug('Will use ignition %s', ignition)
             dest = os.path.join(ROOT_MOUNT_PATH, 'tmp', 'ironic.ign')
             with open(dest, 'wt') as fp:
-                json.dump(ignition, fp)
+                if isinstance(ignition, str):
+                    fp.write(ignition)
+                else:
+                    json.dump(ignition, fp)
             args += ['--ignition-file', '/tmp/ironic.ign']
 
+        append_karg = meta_data.get('coreos_append_karg')
         if append_karg:
             args += ['--append-karg', ','.join(append_karg)]
 
-        if delete_karg:
-            args += ['--delete-karg', ','.join(delete_karg)]
-
-        if image_url is not None:
-            args += ['--image-url', image_url]
+        image_url = node['instance_info'].get('image_source')
+        if image_url:
+            args += ['--image-url', image_url, '--insecure']
         else:
             args += ['--offline']
 
+        copy_network = meta_data.get('coreos_copy_network')
         if copy_network:
             args += ['--copy-network']
 
         command = ['chroot', ROOT_MOUNT_PATH,
                    'coreos-installer', 'install', *args, root]
         LOG.info('Executing CoreOS installer: %s', command)
-        # NOTE(dtantsur): not using utils.execute because it swallows output
-        subprocess.run(command, check=True)
+        try:
+            self._run_install(command)
+        except subprocess.CalledProcessError as exc:
+            raise errors.DeploymentError(
+                f"coreos-install returned error code {exc.returncode}")
         LOG.info('Successfully installed via CoreOS installer on device %s',
                  root)
+
+    @tenacity.retry(
+        retry=tenacity.retry_if_exception_type(subprocess.CalledProcessError),
+        stop=tenacity.stop_after_attempt(3),
+        reraise=True)
+    def _run_install(self, command):
+        try:
+            # NOTE(dtantsur): avoid utils.execute because it swallows output
+            subprocess.run(command, check=True)
+        except FileNotFoundError:
+            raise errors.DeploymentError(
+                "Cannot run coreos-installer, is it installed in "
+                f"{ROOT_MOUNT_PATH}?")
+        except subprocess.CalledProcessError as exc:
+            LOG.warning("coreos-installer failed: %s", exc)
+            raise
