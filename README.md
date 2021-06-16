@@ -24,18 +24,6 @@ enough RAM to the testing nodes, I have used 6 GiB (e.g. add `--memory 6144` to
 Make sure you have [patch
 790472](https://review.opendev.org/c/openstack/ironic/+/790472) in your Ironic.
 
-You will need to enroll nodes using the
-[redfish-virtual-media](https://docs.openstack.org/ironic/latest/admin/drivers/redfish.html#virtual-media-boot)
-boot interface. PXE and iPXE will be supported eventually, but currently are
-not tested.
-
-```
-baremetal node update <node> \
-    --driver redfish \
-    --boot-interface redfish-virtual-media \
-    --reset-interfaces
-```
-
 You will need `coreos-installer`, it can be installed with `cargo`:
 
 ```
@@ -50,7 +38,7 @@ sudo podman run --privileged -d --name registry -p 5000:5000 \
     -v /var/lib/registry:/var/lib/registry --restart=always registry:2
 ```
 
-### Preparing deploy image
+### Preparing deploy image - Redfish virtual media
 
 So far this project has been tested with Fedora CoreOS. Download the suitable
 bare metal image, for example:
@@ -78,11 +66,70 @@ sudo ~/.cargo/bin/coreos-installer iso ignition embed \
     -i ~/ironic-agent.ign -f /httpboot/fcos-ipa.iso
 ```
 
+Configure the nodes to use the
+[redfish-virtual-media](https://docs.openstack.org/ironic/latest/admin/drivers/redfish.html#virtual-media-boot)
+boot interface:
+
+```
+baremetal node update <node> \
+    --driver redfish \
+    --boot-interface redfish-virtual-media \
+    --reset-interfaces
+```
+
 Finally, update your node(s) to use the resulting image:
 
 ```
 baremetal node set <node> \
     --driver-info redfish_deploy_iso=file:///httpboot/fcos-ipa.iso
+```
+
+### Preparing deploy image - PXE
+
+For PXE/iPXE boot you will need to download 3 artifacts: the kernel, the
+initramfs and the root file system, for example:
+
+```
+sudo curl -Lo /httpboot/fcos.kernel \
+    https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210427.3.0/x86_64/fedora-coreos-34.20210427.3.0-live-kernel-x86_64
+sudo curl -Lo /httpboot/fcos.initramfs \
+    https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210427.3.0/x86_64/fedora-coreos-34.20210427.3.0-live-initramfs.x86_64.img
+sudo curl -Lo /httpboot/fcos.rootfs.img \
+    https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210427.3.0/x86_64/fedora-coreos-34.20210427.3.0-live-rootfs.x86_64.img
+```
+
+Next, copy the Ignition configuration, generated on the previous step, to the
+HTTP root directory, for example:
+
+```
+sudo cp ~/ironic-agent.ign /httpboot/ironic-agent.ign
+```
+
+Then you'll need to update the kernel parameters to point at the generated
+file. Open `/etc/ironic/ironic.conf` and edit the following option:
+
+```ini
+[pxe]
+pxe_append_params = nofb nomodeset systemd.journald.forward_to_console=yes console=ttyS0 ipa-insecure=1 ignition.config.url=http://192.168.122.1:8080/ironic-agent.ign coreos.live.rootfs_url=http://192.168.122.1:8080/fcos.rootfs.img ignition.firstboot ignition.platform.id=metal
+```
+
+You'll need to add the following parameters to the existing value (use your IP
+where needed):
+
+- `ignition.config.url=http://192.168.122.1:8080/ironic-agent.ign`
+- `coreos.live.rootfs_url=http://192.168.122.1:8080/fcos.rootfs.img`
+- `ignition.firstboot`
+- `ignition.platform.id=metal`
+
+Restart the ironic conductor if it's already started.
+
+Finally, configure the nodes:
+
+```
+baremetal node set <node> \
+    --driver-info deploy_kernel=file:///httpboot/fcos.kernel \
+    --driver-info deploy_ramdisk=file:///httpboot/fcos.initramfs \
+    --boot-interface ipxe
 ```
 
 ### Preparing container
