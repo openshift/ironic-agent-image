@@ -6,7 +6,6 @@ approvers:
   - elfosardo
   - iurygregory
   - hardys
-  - russellb
   - stbenjam
   - zaneb
 reviewers:
@@ -17,7 +16,6 @@ reviewers:
   - elfosardo
   - iurygregory
   - hardys
-  - russellb
   - zaneb
 
 # Bugzilla Information
