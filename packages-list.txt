@@ -9,7 +9,7 @@ hdparm
 lshw
 mdadm
 nvme-cli
-openstack-ironic-python-agent
+openstack-ironic-python-agent >= 8.0.1-0.20210614102215.8afc176.el8
 parted
 psmisc
 python3-hardware-detect
