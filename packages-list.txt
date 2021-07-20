@@ -16,3 +16,4 @@ python3-hardware-detect
 python3-pip
 qemu-img
 util-linux
+systemd-udev
