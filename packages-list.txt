@@ -9,10 +9,10 @@ hdparm
 lshw
 mdadm
 nvme-cli
-openstack-ironic-python-agent >= 8.0.1-0.20210614102215.8afc176.el8
+openstack-ironic-python-agent >= 8.0.1-0.20210719172214.21c24ab.el8
 parted
 psmisc
-python3-hardware-detect
+python3-hardware-detect >= 0.28.0-0.20210719162211.96c9863.el8
 python3-pip
 qemu-img
 util-linux
