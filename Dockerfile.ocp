@@ -1,6 +1,6 @@
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-base-openshift-4.9
 
-ENV PKGS_LIST=packages-list.txt
+ENV PKGS_LIST=packages-list.ocp
 ARG EXTRA_PKGS_LIST
 ARG PATCH_LIST
 
