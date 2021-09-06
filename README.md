@@ -7,12 +7,6 @@ This is different from standard IPA images that are built with
 [diskimage-builder](https://docs.openstack.org/diskimage-builder/latest/) from
 a conventional Linux distribution, such as CentOS.
 
-This image is [published](https://quay.io/repository/dtantsur/ironic-agent)
-on every commit, you can pull it with:
-```
-podman pull quay.io/dtantsur/ironic-agent
-```
-
 ## Installation
 
 So far it has **not** been tested with other [Metal3](http://metal3.io/)
@@ -138,7 +132,7 @@ This is a straightforward step. Build the container from this repository
 (or pull it using the instructions above) and push it to your registry:
 
 ```
-podman build -t ironic-agent .
+podman build -t ironic-agent -f Dockerfile.ocp
 podman push ironic-agent localhost:5000/ironic-agent --tls-verify=false
 ```
 
