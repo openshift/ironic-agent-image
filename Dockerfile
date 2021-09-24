@@ -1,4 +1,5 @@
-FROM docker.io/centos:centos8
+ARG BASE_IMAGE=quay.io/centos/centos:stream8
+FROM $BASE_IMAGE
 
 ENV PKGS_LIST=packages-list.txt
 ARG EXTRA_PKGS_LIST
@@ -8,7 +9,8 @@ COPY ${PKGS_LIST} ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} /tmp/
 COPY prepare-image.sh patch-image.sh runironicagent /bin/
 
 RUN dnf install -y python3 python3-requests && \
-    curl https://raw.githubusercontent.com/openstack/tripleo-repos/master/tripleo_repos/main.py | python3 - --no-stream -b master current-tripleo && \
+    curl -Lfv https://raw.githubusercontent.com/openstack/tripleo-repos/master/plugins/module_utils/tripleo_repos/main.py | python3 - -b master current-tripleo && \
+    sed -i 's/>=.*$//g' /tmp/${PKGS_LIST} && \
     prepare-image.sh && \
     mkdir -p /etc/ironic-python-agent && \
     rm -f /bin/prepare-image.sh
