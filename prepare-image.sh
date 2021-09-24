@@ -14,6 +14,10 @@ if [[ ! -z ${EXTRA_PKGS_LIST:-} ]]; then
     fi
 fi
 
+# No subscriptions are required (or possible) in this container.
+rpm -q subscription-manager && \
+    dnf remove -y subscription-manager dnf-plugin-subscription-manager || true
+
 # Pbr pulls in Git (30+ MiB), but actually only uses it in development context.
 rpm -q git-core && rpm -e --nodeps git-core || true
 
