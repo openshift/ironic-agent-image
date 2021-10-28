@@ -77,7 +77,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         else:
             args += ['--offline']
 
-        copy_network = meta_data.get('coreos_copy_network')
+        copy_network = meta_data.get('coreos_copy_network', True)
         if copy_network:
             args += ['--copy-network']
 
