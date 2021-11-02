@@ -14,10 +14,18 @@ import json
 import os
 import subprocess
 
+from ironic_lib import disk_utils
 from ironic_python_agent import errors
 from ironic_python_agent import hardware
 from oslo_log import log
 import tenacity
+
+# Handle https://review.opendev.org/c/openstack/ironic-python-agent/+/815651
+try:
+    from ironic_python_agent.efi_utils import manage_uefi
+except ImportError:
+    from ironic_python_agent.extensions.image import _manage_uefi \
+        as manage_uefi
 
 LOG = log.getLogger()
 
@@ -77,7 +85,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         else:
             args += ['--offline']
 
-        copy_network = meta_data.get('coreos_copy_network')
+        copy_network = meta_data.get('coreos_copy_network', True)
         if copy_network:
             args += ['--copy-network']
 
@@ -89,6 +97,15 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         except subprocess.CalledProcessError as exc:
             raise errors.DeploymentError(
                 f"coreos-install returned error code {exc.returncode}")
+
+        # Just in case: re-read disk information
+        disk_utils.trigger_device_rescan(root)
+
+        boot = hardware.dispatch_to_managers('get_boot_info')
+        if boot.current_boot_mode == 'uefi':
+            LOG.info('Configuring UEFI boot from device %s', root)
+            manage_uefi(root)
+
         LOG.info('Successfully installed via CoreOS installer on device %s',
                  root)
 
