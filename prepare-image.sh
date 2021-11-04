@@ -8,6 +8,9 @@ echo "tsflags=nodocs" >> /etc/dnf/dnf.conf
 
 dnf upgrade -y
 grep -vE '^(#|$)' /tmp/${PKGS_LIST} | xargs -rtd'\n' dnf install -y
+if [[ -s /tmp/${PKGS_LIST}-$(arch) ]]; then
+    grep -vE '^(#|$)' /tmp/${PKGS_LIST}-$(arch) | xargs -rtd'\n' dnf install -y
+fi
 if [[ ! -z ${EXTRA_PKGS_LIST:-} ]]; then
     if [[ -s /tmp/${EXTRA_PKGS_LIST} ]]; then
         grep -vE '^(#|$)' /tmp/${EXTRA_PKGS_LIST} | xargs -rtd'\n' dnf install -y
