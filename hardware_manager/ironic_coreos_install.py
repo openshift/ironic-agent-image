@@ -15,17 +15,12 @@ import os
 import subprocess
 
 from ironic_lib import disk_utils
+from ironic_python_agent import efi_utils
 from ironic_python_agent import errors
 from ironic_python_agent import hardware
 from oslo_log import log
 import tenacity
 
-# Handle https://review.opendev.org/c/openstack/ironic-python-agent/+/815651
-try:
-    from ironic_python_agent.efi_utils import manage_uefi
-except ImportError:
-    from ironic_python_agent.extensions.image import _manage_uefi \
-        as manage_uefi
 
 LOG = log.getLogger()
 
@@ -104,7 +99,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         boot = hardware.dispatch_to_managers('get_boot_info')
         if boot.current_boot_mode == 'uefi':
             LOG.info('Configuring UEFI boot from device %s', root)
-            manage_uefi(root)
+            efi_utils.manage_uefi(root)
 
         LOG.info('Successfully installed via CoreOS installer on device %s',
                  root)
