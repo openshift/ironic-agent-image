@@ -6,6 +6,10 @@ echo "install_weak_deps=False" >> /etc/dnf/dnf.conf
 # Tell RPM to skip installing documentation
 echo "tsflags=nodocs" >> /etc/dnf/dnf.conf
 
+if dnf repolist enabled | grep -q openstack-16-for-rhel-8-rpms ; then
+  dnf config-manager --set-disabled openstack-16-for-rhel-8-rpms
+fi
+
 dnf upgrade -y
 grep -vE '^(#|$)' /tmp/${PKGS_LIST} | xargs -rtd'\n' dnf install -y
 if [[ -s /tmp/${PKGS_LIST}-$(arch) ]]; then
