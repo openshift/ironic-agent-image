@@ -12,7 +12,6 @@
 
 import json
 import os
-import shlex
 import subprocess
 
 from ironic_lib import disk_utils
@@ -81,11 +80,6 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         else:
             args += ['--offline']
 
-
-        ip_args = ','.join(_get_kernel_ip_args())
-        if ip_args:
-            args += ['--append-karg', ip_args]
-
         copy_network = meta_data.get('coreos_copy_network', True)
         if copy_network:
             try:
@@ -131,15 +125,3 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         except subprocess.CalledProcessError as exc:
             LOG.warning("coreos-installer failed: %s", exc)
             raise
-
-
-def _get_kernel_ip_args():
-    try:
-        with open(os.path.join(ROOT_MOUNT_PATH, 'proc/cmdline')) as f:
-            cmdline = f.read()
-
-        for arg in shlex.split(cmdline):
-            if arg.startswith('ip='):
-                yield arg
-    except OSError as exc:
-        LOG.warning('Failed to read kernel cmdline: %s', exc)
