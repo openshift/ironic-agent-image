@@ -87,12 +87,6 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         copy_network = meta_data.get('coreos_copy_network',
                 os.getenv('IPA_COREOS_COPY_NETWORK', '').lower() == 'true')
         if copy_network:
-            try:
-                os.unlink(os.path.join(ROOT_MOUNT_PATH, 'etc',
-                                       'NetworkManager/system-connections',
-                                       'default_connection.nmconnection'))
-            except FileNotFoundError:
-                pass
             args += ['--copy-network']
 
         command = ['chroot', ROOT_MOUNT_PATH,
