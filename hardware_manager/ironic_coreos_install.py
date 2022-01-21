@@ -13,8 +13,10 @@
 import json
 import os
 import subprocess
+import time
 
 from ironic_lib import disk_utils
+from ironic_lib import utils
 from ironic_python_agent import efi_utils
 from ironic_python_agent import errors
 from ironic_python_agent import hardware
@@ -25,6 +27,12 @@ import tenacity
 LOG = log.getLogger()
 
 ROOT_MOUNT_PATH = '/mnt/coreos'
+ASSISTED_STATE_MOUNT_PATH = '/mnt/assisted'
+
+_ASSISTED_PID_PATH = os.path.join(ASSISTED_STATE_MOUNT_PATH, 'pid')
+_ASSISTED_TRIGGER_PATH = os.path.join(ASSISTED_STATE_MOUNT_PATH, 'trigger')
+_ASSISTED_RESULT_PATH = os.path.join(ASSISTED_STATE_MOUNT_PATH, 'result')
+_ASSISTED_POLLING_PERIOD = 15
 
 
 class CoreOSInstallHardwareManager(hardware.HardwareManager):
@@ -43,8 +51,47 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
                 'interface': 'deploy',
                 'reboot_requested': False,
                 'argsinfo': {},
-            }
+            },
+            {
+                'step': 'install_assisted',
+                'priority': 0,
+                'interface': 'deploy',
+                'reboot_requested': False,
+                'argsinfo': {},
+            },
         ]
+
+    def _check_assisted_status(self):
+        if not os.path.exists(_ASSISTED_RESULT_PATH):
+            return False
+
+        with open(_ASSISTED_RESULT_PATH, 'rt') as fp:
+            result = fp.read().strip()
+            if result:
+                raise errors.DeploymentError(
+                    f"Failed to install using assisted agent: {result}")
+            else:
+                return True
+
+    def install_assisted(self, node, ports):
+        if not os.path.exists(_ASSISTED_PID_PATH):
+            raise errors.DeploymentError(
+                "Assisted agent is not running or is not configured "
+                "for communication with the ironic agent")
+
+        utils.unlink_without_raise(_ASSISTED_TRIGGER_PATH)
+        utils.unlink_without_raise(_ASSISTED_RESULT_PATH)
+
+        open(_ASSISTED_TRIGGER_PATH, "w").close()
+        LOG.info('Triggered installation via the assisted agent')
+
+        # Ironic already has a deploy timeout, we probably don't need another
+        # one here.
+        while not self._check_assisted_status():
+            LOG.debug('Still waiting for the assisted agent to finish')
+            time.sleep(_ASSISTED_POLLING_PERIOD)
+
+        LOG.info('Succesfully installed using the assisted agent')
 
     def install_coreos(self, node, ports):
         root = hardware.dispatch_to_managers('get_os_install_device',
