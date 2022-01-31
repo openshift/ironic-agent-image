@@ -36,3 +36,5 @@ rm -rf /var/cache/{yum,dnf}/*
 
 # This goes last since it violates package integrity.
 rm -rf /var/log/anaconda /var/lib/dnf/history.* /usr/share/licenses/*
+
+### THIS IS A TEST
