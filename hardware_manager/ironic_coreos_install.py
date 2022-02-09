@@ -10,8 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
 import json
 import os
+import socket
 import subprocess
 import time
 
@@ -29,6 +31,7 @@ import tenacity
 LOG = log.getLogger()
 
 ROOT_MOUNT_PATH = '/mnt/coreos'
+NETWORK_MANAGER_DISPATCHER_PATH = '/etc/NetworkManager/dispatcher.d'
 
 _ASSISTED_AGENT_UNIT = "agent.service"
 _ASSISTED_POLLING_PERIOD = 15
@@ -103,6 +106,38 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
             time.sleep(_ASSISTED_POLLING_PERIOD)
 
         LOG.info('Succesfully installed using the assisted agent')
+    
+    def _append_ignition_with_host_config(self, ignition):
+        if isinstance(ignition, str):
+            ignition_dict = json.loads(ignition)
+        else:
+            ignition_dict = ignition
+
+        for filename in os.listdir(NETWORK_MANAGER_DISPATCHER_PATH):
+            dispatcher_path = os.path.join(NETWORK_MANAGER_DISPATCHER_PATH, filename)
+
+            with open(dispatcher_path, "r") as dispatcher_file:
+                dispatcher_contents = dispatcher_file.read()
+                LOG.debug('Dispatcher file %s: %s', dispatcher_path, dispatcher_contents)
+
+                dispatcher_file_dict = {
+                    "path": "{}".format(dispatcher_path),
+                    "mode": 744,
+                    "overwrite": False,
+                    "contents": { "source": "data:,{}".format(base64.b64encode(dispatcher_contents.encode()))},
+                }
+                ignition_dict.setdefault('storage', {}).setdefault('files', []).append(dispatcher_file_dict)
+	
+                dispatcher_path = os.path.join("/sysroot", dispatcher_path)
+                dispatcher_file_dict = {
+                    "path": "{}".format(dispatcher_path),
+                    "mode": 744,
+                    "overwrite": False,
+                    "contents": { "source": "data:,{}".format(base64.b64encode(dispatcher_contents.encode()))},
+                }
+                ignition_dict.setdefault('storage', {}).setdefault('files', []).append(dispatcher_file_dict)
+
+        return ignition_dict
 
     def install_coreos(self, node, ports):
         root = hardware.dispatch_to_managers('get_os_install_device',
@@ -120,12 +155,11 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
         if ignition:
             LOG.debug('Will use ignition %s', ignition)
+            ignition = self._append_ignition_with_host_config(ignition)
+            LOG.debug('Updated ignition %s', ignition)
             dest = os.path.join(ROOT_MOUNT_PATH, 'tmp', 'ironic.ign')
             with open(dest, 'wt') as fp:
-                if isinstance(ignition, str):
-                    fp.write(ignition)
-                else:
-                    json.dump(ignition, fp)
+                json.dump(ignition, fp)
             args += ['--ignition-file', '/tmp/ironic.ign']
 
         append_karg = meta_data.get('coreos_append_karg')
