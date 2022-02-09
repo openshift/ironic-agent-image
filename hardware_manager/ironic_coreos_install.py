@@ -13,8 +13,12 @@
 import json
 import os
 import subprocess
+import time
+
+import dbus
 
 from ironic_lib import disk_utils
+from ironic_lib import utils
 from ironic_python_agent import efi_utils
 from ironic_python_agent import errors
 from ironic_python_agent import hardware
@@ -25,6 +29,9 @@ import tenacity
 LOG = log.getLogger()
 
 ROOT_MOUNT_PATH = '/mnt/coreos'
+
+_ASSISTED_AGENT_UNIT = "agent.service"
+_ASSISTED_POLLING_PERIOD = 15
 
 
 class CoreOSInstallHardwareManager(hardware.HardwareManager):
@@ -43,8 +50,59 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
                 'interface': 'deploy',
                 'reboot_requested': False,
                 'argsinfo': {},
-            }
+            },
+            {
+                'step': 'start_assisted_install',
+                'priority': 0,
+                'interface': 'deploy',
+                'reboot_requested': False,
+                'argsinfo': {},
+            },
         ]
+
+
+    @property
+    def dbus(self):
+        return dbus.SystemBus()
+
+    @property
+    def systemd(self):
+        systemd = self.dbus.get_object('org.freedesktop.systemd1', '/org/freedesktop/systemd1')
+        return dbus.Interface(systemd, 'org.freedesktop.systemd1.Manager')
+
+    @property
+    def assisted_unit(self):
+        try:
+            unit = self.systemd.GetUnit(_ASSISTED_AGENT_UNIT)
+            service = self.dbus.get_object('org.freedesktop.systemd1', object_path=unit)
+            return dbus.Interface(service, dbus_interface='org.freedesktop.DBus.Properties')
+        except dbus.exceptions.DBusException as e:
+            if "org.freedesktop.systemd1.NoSuchUnit" in str(e):
+                return None
+            raise
+
+    def _is_assisted_running(self):
+        unit = self.assisted_unit
+
+        if unit is None:
+            return False
+
+        return str(unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')) in ['activating', 'active']
+
+    def start_assisted_install(self, node, ports):
+        if self._is_assisted_running():
+            LOG.error("Assisted Installer Agent should not be active at this stage")
+
+        self.systemd.StartUnit(_ASSISTED_AGENT_UNIT, "fail")
+        LOG.info('Triggered installation via the assisted agent')
+
+        # Ironic already has a deploy timeout, we probably don't need another
+        # one here.
+        while self._is_assisted_running():
+            LOG.debug('Still waiting for the assisted agent to finish')
+            time.sleep(_ASSISTED_POLLING_PERIOD)
+
+        LOG.info('Succesfully installed using the assisted agent')
 
     def install_coreos(self, node, ports):
         root = hardware.dispatch_to_managers('get_os_install_device',
