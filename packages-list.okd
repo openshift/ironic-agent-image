@@ -11,6 +11,7 @@ nvme-cli
 openstack-ironic-python-agent
 parted
 psmisc
+python3-dbus
 python3-hardware-detect
 python3-pip
 qemu-img
