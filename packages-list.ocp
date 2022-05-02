@@ -11,6 +11,7 @@ nvme-cli
 openstack-ironic-python-agent >= 8.4.1-0.20220216141014.a83f384.el8
 parted
 psmisc
+python3-dbus
 python3-hardware-detect >= 0.29.0-0.20211122094056.7662a1d.el8
 python3-pip
 qemu-img
