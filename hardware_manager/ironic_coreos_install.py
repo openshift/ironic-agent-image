@@ -162,13 +162,17 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         boot = hardware.dispatch_to_managers('get_boot_info')
         if boot.current_boot_mode == 'uefi':
             LOG.info('Configuring UEFI boot from device %s', root)
-            try:
-                efi_utils.manage_uefi(root)
-            except errors.CommandExecutionError as exc:
-                # https://bugzilla.redhat.com/show_bug.cgi?id=2057668
-                LOG.warning("UEFI boot configuration failed(retrying): %s", exc)
-                efi_utils.manage_uefi(root)
-
+            for count in range(3):
+                try:
+                    efi_utils.manage_uefi(root)
+                    break
+                except errors.CommandExecutionError as exc:
+                    if count < 2:
+                        time.sleep(3)
+                        # https://bugzilla.redhat.com/show_bug.cgi?id=2057668
+                        LOG.warning("UEFI boot configuration failed(retrying): %s", exc)
+                    else:
+                        raise exc
         LOG.info('Successfully installed via CoreOS installer on device %s',
                  root)
 
