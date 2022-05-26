@@ -13,6 +13,7 @@
 import json
 import os
 import subprocess
+import time
 
 from ironic_lib import disk_utils
 from ironic_python_agent import efi_utils
