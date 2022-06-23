@@ -8,7 +8,7 @@ ipmitool
 lshw
 mdadm
 nvme-cli
-openstack-ironic-python-agent >= 8.6.1-0.20220602125411.d25f5be.el8
+openstack-ironic-python-agent >= 8.6.1-0.20220623075054.1d50c23.el8
 parted
 psmisc
 python3-dbus
