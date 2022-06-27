@@ -1,4 +1,5 @@
 chrony
+device-mapper-multipath
 dosfstools
 efibootmgr
 efivar
