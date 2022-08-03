@@ -5,6 +5,7 @@ efibootmgr
 efivar
 gdisk
 ipmitool
+iproute
 hdparm
 lshw
 mdadm
