@@ -6,6 +6,7 @@ efivar
 gdisk
 hdparm
 ipmitool
+iproute
 lshw
 mdadm
 nvme-cli
