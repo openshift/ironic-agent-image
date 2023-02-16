@@ -23,7 +23,7 @@ from oslo_log import log
 import tenacity
 
 
-LOG = log.getLogger()
+LOG = log.getLogger(__name__)
 
 ROOT_MOUNT_PATH = '/mnt/coreos'
 
@@ -98,11 +98,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         command = ['chroot', ROOT_MOUNT_PATH,
                    'coreos-installer', 'install', *args, root]
         LOG.info('Executing CoreOS installer: %s', command)
-        try:
-            self._run_install(command)
-        except subprocess.CalledProcessError as exc:
-            raise errors.DeploymentError(
-                f"coreos-install returned error code {exc.returncode}")
+        self._run_install(command)
 
         # Just in case: re-read disk information
         disk_utils.trigger_device_rescan(root)
@@ -125,17 +121,32 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
                  root)
 
     @tenacity.retry(
-        retry=tenacity.retry_if_exception_type(subprocess.CalledProcessError),
+        retry=tenacity.retry_if_exception_type(errors.DeploymentError),
         stop=tenacity.stop_after_attempt(3),
         reraise=True)
     def _run_install(self, command):
+        last_line = None
         try:
-            # NOTE(dtantsur): avoid utils.execute because it swallows output
-            subprocess.run(command, check=True)
+            # NOTE(dtantsur): we need to capture the output to be able to log
+            # it properly. However, we also want to see it in the logs as it is
+            # happening (to be able to debug hangs or performance problems).
+            proc = subprocess.Popen(command,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT,
+                                    encoding="utf-8",
+                                    errors='backslashreplace')
+            for line in proc.stdout:
+                line = line.strip()
+                if line:
+                    last_line = line
+                LOG.debug("coreos-installer: %s", line)
         except FileNotFoundError:
             raise errors.DeploymentError(
                 "Cannot run coreos-installer, is it installed in "
                 f"{ROOT_MOUNT_PATH}?")
-        except subprocess.CalledProcessError as exc:
-            LOG.warning("coreos-installer failed: %s", exc)
-            raise
+
+        code = proc.wait()
+        if code:
+            LOG.error("coreos-installer failed with code %d", code)
+            error = f"coreos-installer failed with code {code}: {last_line}"
+            raise errors.DeploymentError(error)
