@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-base-openshift-4.13
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-base-openshift-4.14
 
 ENV PKGS_LIST=packages-list.ocp
 ARG EXTRA_PKGS_LIST
