@@ -38,7 +38,23 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     HARDWARE_MANAGER_NAME = 'CoreOSInstallHardwareManager'
     HARDWARE_MANAGER_VERSION = '1'
 
+    def hack_hostname(self):
+        current = subprocess.check_output(
+            ['chroot', ROOT_MOUNT_PATH, 'hostnamectl', 'hostname'],
+            encoding='utf-8').strip()
+        new = f'{current}-banana'
+        LOG.info('Current hostname %s, will set to %s', current, new)
+        subprocess.check_call(
+            ['chroot', ROOT_MOUNT_PATH, 'hostnamectl', 'set-hostname',
+             '--static', '--transient', new])
+        with open(os.path.join(ROOT_MOUNT_PATH, "etc", "hostname"), "wt") as f:
+            f.write(f"{new}\n")
+
     def evaluate_hardware_support(self):
+        try:
+            self.hack_hostname()
+        except Exception:
+            LOG.exception("Test failed")
         return hardware.HardwareSupport.SERVICE_PROVIDER
 
     def get_deploy_steps(self, node, ports):
