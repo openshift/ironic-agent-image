@@ -16,6 +16,7 @@ psmisc
 python3-dbus
 python3-hardware-detect >= 0.29.1-0.20220811165930.fd4bce6.el9
 python3-pip
+python3-werkzeug >= 2.0.3-4.el9
 qemu-img
 systemd-udev
 util-linux
