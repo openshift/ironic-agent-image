@@ -13,7 +13,7 @@ RUN prepare-image.sh && \
 
 COPY hardware_manager /tmp/hardware_manager
 
-RUN PBR_VERSION=1.0 pip3 install --no-index --verbose --prefix=/usr /tmp/hardware_manager
+RUN PBR_VERSION=1.0 python3 -m pip install --no-index --verbose --prefix=/usr /tmp/hardware_manager
 
 COPY ironic-python-agent.conf /etc/ironic-python-agent/00-defaults.conf
 
