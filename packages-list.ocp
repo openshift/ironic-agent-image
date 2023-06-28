@@ -10,7 +10,7 @@ iproute
 lshw
 mdadm
 nvme-cli
-openstack-ironic-python-agent >= 9.5.0-0.20230323150538.6e0c704.el9
+openstack-ironic-python-agent >= 9.5.0-0.20230531120531.e6eeb3a.el9
 parted
 psmisc
 python3-dbus
