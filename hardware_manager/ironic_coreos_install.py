@@ -14,6 +14,7 @@ import json
 import os
 import subprocess
 import time
+from urllib import parse as urlparse
 
 import dbus
 
@@ -38,7 +39,14 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     HARDWARE_MANAGER_NAME = 'CoreOSInstallHardwareManager'
     HARDWARE_MANAGER_VERSION = '1'
 
+    _fixed_hostname = None
+
     def evaluate_hardware_support(self):
+        try:
+            self._fix_hostname()
+        except Exception as exc:
+            LOG.exception('Failed to update hostname')
+            raise RuntimeError(f'Failed to update hostname: {exc}')
         return hardware.HardwareSupport.SERVICE_PROVIDER
 
     def get_deploy_steps(self, node, ports):
@@ -59,6 +67,29 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
             },
         ]
 
+    def _fix_hostname(self):
+        current = subprocess.check_output(
+            ['chroot', ROOT_MOUNT_PATH, 'hostnamectl', 'hostname'],
+            encoding='utf-8').strip()
+        if current not in ('localhost', 'localhost.localdomain'):
+            return
+
+        new = os.getenv('IPA_DEFAULT_HOSTNAME')
+        if not new:
+            LOG.warning('This host has a local hostname %s, but the '
+                        'BareMetalHost name is not provided to fix it',
+                        current)
+            return
+
+        LOG.info('Fixing local hostname %s to BareMetalHost name %s',
+                 current, new)
+        subprocess.check_call(
+            ['chroot', ROOT_MOUNT_PATH, 'hostnamectl', 'set-hostname',
+             '--static', '--transient', new])
+        # IPA is run in a container, /etc/hostname is not updated there
+        with open('/etc/hostname', 'wt') as fp:
+            fp.write(new)
+        self._fixed_hostname = new
 
     @property
     def dbus(self):
@@ -103,6 +134,27 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
         LOG.info('Succesfully installed using the assisted agent')
 
+    def _add_firstboot_hostname_fix(self, ignition):
+        if not self._fixed_hostname:
+            return ignition
+
+        if isinstance(ignition, str):
+            ignition = json.loads(ignition)
+        elif not ignition:
+            ignition = {}
+
+        encoded = urlparse.quote(self._fixed_hostname)
+
+        files = ignition.setdefault('storage', {}).setdefault('files', [])
+        files.append({
+            'path': '/etc/hostname',
+            'mode': 0o644,
+            'overwrite': True,
+            'contents': {'source': f'data:,{encoded}'},
+        })
+
+        return ignition
+
     def install_coreos(self, node, ports):
         root = hardware.dispatch_to_managers('get_os_install_device',
                                              permit_refresh=True)
@@ -117,6 +169,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
         args = ['--preserve-on-error']  # We have cleaning to do this
 
+        ignition = self._add_firstboot_hostname_fix(ignition)
         if ignition:
             LOG.debug('Will use ignition %s', ignition)
             dest = os.path.join(ROOT_MOUNT_PATH, 'tmp', 'ironic.ign')
