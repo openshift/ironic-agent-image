@@ -32,6 +32,8 @@ ROOT_MOUNT_PATH = '/mnt/coreos'
 
 _ASSISTED_AGENT_UNIT = "agent.service"
 _ASSISTED_POLLING_PERIOD = 15
+_ACTIVE_STATES = frozenset(['activating', 'active'])
+_FAILED_STATES = frozenset(["failed"])
 
 
 class CoreOSInstallHardwareManager(hardware.HardwareManager):
@@ -40,6 +42,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     HARDWARE_MANAGER_VERSION = '1'
 
     _fixed_hostname = None
+    _dbus = None
 
     def evaluate_hardware_support(self):
         try:
@@ -104,38 +107,45 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
     @property
     def dbus(self):
-        return dbus.SystemBus()
+        if self._dbus is None:
+            self._dbus = dbus.SystemBus()
+        return self._dbus
 
     @property
     def systemd(self):
-        systemd = self.dbus.get_object('org.freedesktop.systemd1', '/org/freedesktop/systemd1')
+        systemd = self.dbus.get_object(
+            'org.freedesktop.systemd1', '/org/freedesktop/systemd1')
         return dbus.Interface(systemd, 'org.freedesktop.systemd1.Manager')
 
     @property
     def assisted_unit(self):
-        try:
-            unit = self.systemd.GetUnit(_ASSISTED_AGENT_UNIT)
-            service = self.dbus.get_object('org.freedesktop.systemd1', object_path=unit)
-            return dbus.Interface(service, dbus_interface='org.freedesktop.DBus.Properties')
-        except dbus.exceptions.DBusException as e:
-            if "org.freedesktop.systemd1.NoSuchUnit" in str(e):
-                return None
-            raise
+        unit = self.systemd.LoadUnit(_ASSISTED_AGENT_UNIT)
+        service = self.dbus.get_object(
+            'org.freedesktop.systemd1', object_path=unit)
+        return dbus.Interface(
+            service, dbus_interface='org.freedesktop.DBus.Properties')
 
     def _is_assisted_running(self):
         unit = self.assisted_unit
-
-        if unit is None:
-            return False
-
-        return str(unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')) in ['activating', 'active']
+        state = unit.Get('org.freedesktop.systemd1.Unit', 'ActiveState')
+        result = unit.Get('org.freedesktop.systemd1.Service', 'Result')
+        LOG.debug('Assisted Agent is in state %s (result %s)', state, result)
+        if state in _FAILED_STATES:
+            raise errors.DeploymentError(
+                f'Assisted Installer Agent has failed with result "{result}". '
+                'Check the ramdisk logs for more details.')
+        return state in _ACTIVE_STATES
 
     def start_assisted_install(self, node, ports):
         if self._is_assisted_running():
-            LOG.error("Assisted Installer Agent should not be active at this stage")
+            LOG.error(
+                "Assisted Installer Agent should not be active at this stage")
 
         self.systemd.StartUnit(_ASSISTED_AGENT_UNIT, "fail")
         LOG.info('Triggered installation via the assisted agent')
+
+        # A short sleep to avoid catching systemd in-between actions.
+        time.sleep(1)
 
         # Ironic already has a deploy timeout, we probably don't need another
         # one here.
