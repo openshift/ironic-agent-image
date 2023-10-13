@@ -1,0 +1,34 @@
+From 911940cbae6788b464468b2c8bed8b81b8a64d09 Mon Sep 17 00:00:00 2001
+From: Dmitry Tantsur <dtantsur@protonmail.com>
+Date: Fri, 13 Oct 2023 14:46:16 +0200
+Subject: [PATCH] Initialize SSLSocket._timeout before calling parent __init__
+
+Normally, settimeout is called before this method is used. But the
+recent fix for CVE-2023-40217 in Python 3.6 added a call to gettimeout
+pretty early, hitting an AttributeError. This patch makes sure _timeout
+is always initialized, not just on Python 2.
+---
+ eventlet/green/ssl.py | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/eventlet/green/ssl.py b/eventlet/green/ssl.py
+index be4f29b..c35447b 100644
+--- a/eventlet/green/ssl.py
++++ b/eventlet/green/ssl.py
+@@ -105,10 +105,9 @@ class GreenSSLSocket(_original_sslsocket):
+             sock = GreenSocket(sock)
+         self.act_non_blocking = sock.act_non_blocking
+ 
+-        if six.PY2:
+-            # On Python 2 SSLSocket constructor queries the timeout, it'd break without
+-            # this assignment
+-            self._timeout = sock.gettimeout()
++        # SSLSocket constructor queries the timeout, it'd break without
++        # this assignment
++        self._timeout = sock.gettimeout()
+ 
+         if _is_under_py_3_7:
+             # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
+-- 
+2.41.0
+

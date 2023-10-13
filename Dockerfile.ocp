@@ -17,4 +17,9 @@ RUN PBR_VERSION=1.0 pip3 install --no-index --verbose --prefix=/usr /tmp/hardwar
 
 COPY ironic-python-agent.conf /etc/ironic-python-agent/00-defaults.conf
 
+COPY 0001-Initialize-SSLSocket._timeout-before-calling-parent-.patch /tmp/
+
+RUN patch -d /usr/lib/python3.6/site-packages -p 1 \
+    < /tmp/0001-Initialize-SSLSocket._timeout-before-calling-parent-.patch
+
 ENTRYPOINT ["ironic-python-agent", "--config-dir", "/etc/ironic-python-agent"]

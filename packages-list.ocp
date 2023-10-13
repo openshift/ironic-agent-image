@@ -11,6 +11,7 @@ mdadm
 nvme-cli
 openstack-ironic-python-agent >= 8.6.1-0.20220809035359.8baf6a6.el8
 parted
+patch
 psmisc
 python3-dbus
 python3-hardware-detect >= 0.29.0-0.20211122094056.7662a1d.el8
