@@ -70,17 +70,14 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     def _fix_hostname(self):
         try:
             current = subprocess.check_output(
-                ['chroot', ROOT_MOUNT_PATH, 'hostnamectl', 'hostname'],
+                ['uname', '-n'],
                 encoding='utf-8',
-                stderr=subprocess.PIPE)
+                stderr=subprocess.PIPE).strip()
         except (OSError, subprocess.SubprocessError) as exc:
             error = getattr(exc, 'stderr', None) or str(exc)
-            LOG.warning("Failed to call hostnamectl, will use /etc/hostname "
-                        "instead. Error: %s", error.strip())
-            with open('/etc/hostname', 'rt') as hostfile:
-                current = hostfile.read()
+            LOG.warning("Failed to call uname: %s", error.strip())
+            return
 
-        current = current.strip()
         LOG.debug('The current hostname is %s', current)
         if current not in ('localhost', 'localhost.localdomain'):
             return
