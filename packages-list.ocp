@@ -13,6 +13,7 @@ openstack-ironic-python-agent >= 8.6.1-0.20220809035359.8baf6a6.el8
 parted
 psmisc
 python3-dbus
+python3-eventlet >= 0.30.2-3.el8
 python3-hardware-detect >= 0.29.0-0.20211122094056.7662a1d.el8
 python3-pip
 python3-werkzeug >= 2.0.3-4.el8
