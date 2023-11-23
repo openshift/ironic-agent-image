@@ -10,13 +10,13 @@ iproute
 lshw
 mdadm
 nvme-cli
-openstack-ironic-python-agent = 9.5.0-0.20231027204537.2ecc142.el9
+openstack-ironic-python-agent = 9.8.0-0.20231122124528.50da02f.el9
 parted
 psmisc
 python3-dbus
 python3-hardware-detect >= 0.31.0-0.20231026124537.af076d3.el9
 python3-pip
-python3-werkzeug >= 2.0.3-5.el9
+python3-werkzeug >= 2.2.3-2.el9
 qemu-img
 /usr/sbin/udevadm
 util-linux
