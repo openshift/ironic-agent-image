@@ -41,7 +41,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     HARDWARE_MANAGER_NAME = 'CoreOSInstallHardwareManager'
     HARDWARE_MANAGER_VERSION = '1'
 
-    _fixed_hostname = None
+    _firstboot_hostname = None
     _dbus = None
 
     def evaluate_hardware_support(self):
@@ -86,6 +86,10 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         current = current.strip()
         LOG.debug('The current hostname is %s', current)
         if current not in ('localhost', 'localhost.localdomain'):
+            # Regardless of whether the hostname had been previously set or it gets set below
+            # we need to make sure if matches the name when the node boot so always set firstboot
+            # in ignition
+            self._firstboot_hostname = current
             return
 
         new = os.getenv('IPA_DEFAULT_HOSTNAME')
@@ -103,7 +107,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         # IPA is run in a container, /etc/hostname is not updated there
         with open('/etc/hostname', 'wt') as fp:
             fp.write(new)
-        self._fixed_hostname = new
+        self._firstboot_hostname = new
 
     @property
     def dbus(self):
@@ -156,7 +160,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         LOG.info('Succesfully installed using the assisted agent')
 
     def _add_firstboot_hostname_fix(self, ignition):
-        if not self._fixed_hostname:
+        if not self._firstboot_hostname:
             return ignition
 
         if isinstance(ignition, str):
@@ -164,7 +168,7 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         elif not ignition:
             ignition = {}
 
-        encoded = urlparse.quote(self._fixed_hostname)
+        encoded = urlparse.quote(self._firstboot_hostname)
 
         files = ignition.setdefault('storage', {}).setdefault('files', [])
         files.append({
