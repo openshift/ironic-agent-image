@@ -1,3 +1,4 @@
+/usr/sbin/udevadm
 chrony
 device-mapper-multipath
 dosfstools
@@ -10,13 +11,23 @@ iproute
 lshw
 mdadm
 nvme-cli
-openstack-ironic-python-agent >= 9.6.1-0.20240103100525.3197b9d.el9
 parted
 psmisc
+python3-bcrypt
 python3-dbus
+python3-eventlet
 python3-hardware-detect >= 0.30.0-0.20230308190813.f6ff0ed.el9
+python3-oslo-concurrency
+python3-oslo-log
+python3-oslo-service
+python3-pint
 python3-pip
+python3-psutil
+python3-pyudev
+python3-tenacity
+python3-tooz
+python3-webob
 python3-werkzeug >= 2.2.3-2.el9
+python3-zeroconf
 qemu-img
-/usr/sbin/udevadm
 util-linux
