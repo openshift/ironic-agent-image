@@ -1,157 +1,64 @@
 # Ironic Agent Container
 
-This is an **experimental** container and associated tooling for using
-[ironic-python-agent](https://docs.openstack.org/ironic-python-agent/latest/)
-(IPA) on top of [CoreOS](https://docs.fedoraproject.org/en-US/fedora-coreos/).
-This is different from standard IPA images that are built with
-[diskimage-builder](https://docs.openstack.org/diskimage-builder/latest/) from
-a conventional Linux distribution, such as CentOS.
+This is an container image for using [ironic-python-agent][ipa] (IPA) on top of
+CoreOS. This is different from standard IPA images that are built with
+[diskimage-builder][dib] from a conventional Linux distribution, such as
+RHEL or Debian.
 
-## Installation
+This repository also contains a CoreOS-specific [IPA hardware manager][ipamgrs]
+called [ironic_coreos_install][hwmgr]. It is responsible for the customized
+installation process.
 
-So far it has **not** been tested with other [Metal3](http://metal3.io/)
-components, to experiment with it you'll need a pure Ironic installation, such
-as [Bifrost](https://docs.openstack.org/bifrost/latest/). Make sure to allocate
-enough RAM to the testing nodes, I have used 6 GiB (e.g. add `--memory 6144` to
-`./bifrost-cli testenv` invocation).
+[ipa]: https://docs.openstack.org/ironic-python-agent/latest/
+[dib]: https://docs.openstack.org/diskimage-builder/latest/
+[ipamgrs]: https://docs.openstack.org/ironic-python-agent/latest/contributor/hardware_managers.html
+[hwmgr]: https://github.com/openshift/ironic-agent-image/blob/main/hardware_manager/ironic_coreos_install.py
 
-Make sure you have [patch
-790472](https://review.opendev.org/c/openstack/ironic/+/790472) in your Ironic.
+## How it works
 
-You will need `coreos-installer`, it can be installed with `cargo`:
+Unlike a conventional IPA image, the IPA source is not shipped with a CoreOS
+image. Instead, another component called [image-customization-controller][icc]
+is used to inject its configuration into the ramdisk's Ignition. IPA is started
+as a systemd service that downloads its container image on start-up.
 
-```
-sudo dnf install -y cargo
-cargo install coreos-installer
-```
+[Inspection][inspection] and [automated cleaning][cleaning] works as usual in
+Ironic, but the deployment process is very different. Instead of downloading a
+QCOW2 image and writing it to the disk, the [custom hardware manager][hwmgr]
+runs the `coreos-installer` command shipped with the CoreOS image to install
+the contents of the ramdisk onto the disk. This way, no separate CoreOS image
+is required.
 
-Finally, you'll need a container registry. You can set one up locally:
+To achieve this, the BareMetal Operator [custom deploy][custom deploy] feature
+is used. It allows replacing some of the normal Ironic [deploy steps][standard
+steps] with the [install_coreos step][install-coreos] shipped here.
 
-```
-sudo podman run --privileged -d --name registry -p 5000:5000 \
-    -v /var/lib/registry:/var/lib/registry --restart=always registry:2
-```
+[icc]: https://github.com/openshift/image-customization-controller
+[inspection]: https://docs.openstack.org/ironic/latest/admin/inspection/index.html
+[cleaning]: https://docs.openstack.org/ironic/latest/admin/cleaning.html#automated-cleaning
+[custom deploy]: https://github.com/metal3-io/metal3-docs/blob/main/design/baremetal-operator/deploy-steps.md
+[standard steps]: https://docs.openstack.org/ironic/latest/admin/node-deployment.html#agent-steps
+[install-coreos]: https://github.com/openshift/ironic-agent-image/blob/f4b86c20989a79e611a27975ac02d0f824b8e5c7/hardware_manager/ironic_coreos_install.py#L183
 
-### Preparing deploy image - Redfish virtual media
+## Assisted agent integration
 
-So far this project has been tested with Fedora CoreOS. Download the suitable
-bare metal image, for example:
+The [custom hardware manager][hwmgr] also ships another deploy step
+`start_assisted_install` that allows integration with the [assisted
+service][assisted service] in a so called *converged flow* (in a contrast with
+the older *non-converged flow* that did not use IPA at all).
 
-```
-sudo curl -Lo /httpboot/fcos-ipa.iso \
-    https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/33.20210314.3.0/x86_64/fedora-coreos-33.20210314.3.0-live.x86_64.iso
-```
+The assisted service invokes the converged flow by creating a CoreOS ramdisk
+with an Ignition that starts IPA and also ships the [assisted agent][assisted
+agent] without starting it.
 
-Next you need to inject the Ignition configuration into it. This repository
-contains a Python script to generate such configuration from the IP addresses.
-For Bifrost it may looks like:
+The converged flow also starts with [inspection][inspection] unless disabled by
+a user. To make a host available for the assisted installation, the assisted
+service invokes the `start_assisted_install` step. This causes the host to move
+to the `provisioning` state, while IPA uses the systemd D-BUS API to start the
+assisted agent. IPA then waits for the assisted agent to exit and reports the
+exit status back to Ironic and eventually to BareMetal Operator.
 
-```
-./ignition/build.py \
-    --host 192.168.122.1 \
-    --registry 192.168.122.1:5000 \
-    --insecure-registry > ~/ironic-agent.ign
-```
+The converged flow also allows cleaning and preparation steps such as RAID
+configuration or firmware settings to be run before provisioning.
 
-Then use `coreos-installer` to inject it:
-
-```
-sudo ~/.cargo/bin/coreos-installer iso ignition embed \
-    -i ~/ironic-agent.ign -f /httpboot/fcos-ipa.iso
-```
-
-Configure the nodes to use the
-[redfish-virtual-media](https://docs.openstack.org/ironic/latest/admin/drivers/redfish.html#virtual-media-boot)
-boot interface:
-
-```
-baremetal node update <node> \
-    --driver redfish \
-    --boot-interface redfish-virtual-media \
-    --reset-interfaces
-```
-
-Finally, update your node(s) to use the resulting image:
-
-```
-baremetal node set <node> \
-    --driver-info redfish_deploy_iso=file:///httpboot/fcos-ipa.iso
-```
-
-### Preparing deploy image - PXE
-
-For PXE/iPXE boot you will need to download 3 artifacts: the kernel, the
-initramfs and the root file system, for example:
-
-```
-sudo curl -Lo /httpboot/fcos.kernel \
-    https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210427.3.0/x86_64/fedora-coreos-34.20210427.3.0-live-kernel-x86_64
-sudo curl -Lo /httpboot/fcos.initramfs \
-    https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210427.3.0/x86_64/fedora-coreos-34.20210427.3.0-live-initramfs.x86_64.img
-sudo curl -Lo /httpboot/fcos.rootfs.img \
-    https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/34.20210427.3.0/x86_64/fedora-coreos-34.20210427.3.0-live-rootfs.x86_64.img
-```
-
-Next, copy the Ignition configuration, generated on the previous step, to the
-HTTP root directory, for example:
-
-```
-sudo cp ~/ironic-agent.ign /httpboot/ironic-agent.ign
-```
-
-Then you'll need to update the kernel parameters to point at the generated
-file. Open `/etc/ironic/ironic.conf` and edit the following option:
-
-```ini
-[pxe]
-pxe_append_params = nofb nomodeset systemd.journald.forward_to_console=yes console=ttyS0 ipa-insecure=1 ignition.config.url=http://192.168.122.1:8080/ironic-agent.ign coreos.live.rootfs_url=http://192.168.122.1:8080/fcos.rootfs.img ignition.firstboot ignition.platform.id=metal
-```
-
-You'll need to add the following parameters to the existing value (use your IP
-where needed):
-
-- `ignition.config.url=http://192.168.122.1:8080/ironic-agent.ign`
-- `coreos.live.rootfs_url=http://192.168.122.1:8080/fcos.rootfs.img`
-- `ignition.firstboot`
-- `ignition.platform.id=metal`
-
-Restart the ironic conductor if it's already started.
-
-Finally, configure the nodes:
-
-```
-baremetal node set <node> \
-    --driver-info deploy_kernel=file:///httpboot/fcos.kernel \
-    --driver-info deploy_ramdisk=file:///httpboot/fcos.initramfs \
-    --boot-interface ipxe
-```
-
-### Preparing container
-
-This is a straightforward step. Build the container from this repository
-(or pull it using the instructions above) and push it to your registry:
-
-```
-podman build -t ironic-agent -f Dockerfile.ocp
-podman push ironic-agent localhost:5000/ironic-agent --tls-verify=false
-```
-
-Now you're ready to inspect, clean and deploy nodes.
-
-### Using CoreOS installer
-
-If you want to use `coreos-installer` instead of the standard Ironic deploy
-procedure, you need to switch to the `custom-agent` deploy interface added
-(very) recently to Ironic:
-
-```
-baremetal node set <node> --deploy-interface custom-agent
-```
-
-Then you can deploy with:
-
-```
-baremetal node deploy <node> \
-    --deploy-steps '[{"interface": "deploy", "step": "install_coreos", "priority": 80, "args": {}}]' \
-    --config-drive '{"user_data": {.. your ignition ..}}'
-```
+[assisted service]: https://github.com/openshift/assisted-service
+[assisted agent]: https://github.com/openshift/assisted-installer-agent
