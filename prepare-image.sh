@@ -2,6 +2,8 @@
 
 set -euxo pipefail
 
+# THIS IS A TEST
+
 echo "install_weak_deps=False" >> /etc/dnf/dnf.conf
 # Tell RPM to skip installing documentation
 echo "tsflags=nodocs" >> /etc/dnf/dnf.conf

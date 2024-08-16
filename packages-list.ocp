@@ -23,7 +23,7 @@ python3-oslo-service >= 3.5.0-0.20240708131154.a84a9de.el9
 python3-pint
 python3-psutil
 python3-pyudev
-python3-tenacity
+python3-tenacity >= 6.3.1-1.el9
 python3-tooz >= 6.2.0-0.20240708131954.c65282f.el9
 python3-werkzeug >= 2.2.3-2.el9
 python3-zeroconf >= 0.24.4-2.el9

@@ -6,6 +6,8 @@ ENV PKGS_LIST=packages-list.ocp
 ARG EXTRA_PKGS_LIST
 ARG PATCH_LIST
 
+# THIS IS A TEST
+
 COPY ${PKGS_LIST}* ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} /tmp/
 COPY prepare-image.sh patch-image.sh /bin/
 
