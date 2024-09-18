@@ -25,7 +25,8 @@ python3-psutil
 python3-pyudev
 python3-tenacity
 python3-tooz >= 4.2.0-0.20231214201931.bed303e.el9
-python3-werkzeug >= 2.2.3-2.el9
+python3-webob >= 1.8.8-2.el9
+python3-werkzeug >= 2.2.3-3.el9
 python3-zeroconf >= 0.24.4-2.el9
 qemu-img
 /usr/sbin/udevadm
