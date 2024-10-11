@@ -18,7 +18,7 @@ from urllib import parse as urlparse
 
 import dbus
 
-from ironic_lib import disk_utils
+from ironic_python_agent import disk_utils
 from ironic_python_agent import efi_utils
 from ironic_python_agent import errors
 from ironic_python_agent import hardware
