@@ -64,7 +64,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
     # See https://issues.redhat.com/browse/METAL-1049 for more details.
     PIP_SOURCES_DIR="all_sources"
     mkdir $PIP_SOURCES_DIR
-    python3 -m pip download --no-deps -r "${REQS}" -d $PIP_SOURCES_DIR
+    python3 -m pip download --no-build-isolation --no-deps -r "${REQS}" -d $PIP_SOURCES_DIR
     python3 -m pip install $PIP_OPTIONS --prefix /usr -r "${REQS}" -f $PIP_SOURCES_DIR
 
     # NOTE(janders) since we set --no-compile at install time, we need to
