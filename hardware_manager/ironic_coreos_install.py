@@ -166,7 +166,8 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         if isinstance(ignition, str):
             ignition = json.loads(ignition)
         elif not ignition:
-            ignition = {}
+            ignition = {"ignition":{"version":"3.0.0"}}
+
 
         encoded = urlparse.quote(self._firstboot_hostname)
 
