@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-CHECK_RELEASE=${CHECK_RELEASE:-"master"}
+CHECK_RELEASE=${CHECK_RELEASE:-"main"}
 
 REPO="openstack-ironic-python-agent"
 
