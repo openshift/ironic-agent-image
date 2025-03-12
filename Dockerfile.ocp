@@ -12,7 +12,8 @@ COPY prepare-image.sh patch-image.sh /bin/
 # some cachito magic
 COPY "$REMOTE_SOURCES" "$REMOTE_SOURCES_DIR"
 
-RUN prepare-image.sh && \
+RUN dnf config-manager --disable rhel-9-openstack-17-rpms  || true && \
+  prepare-image.sh && \
   mkdir -p /etc/ironic-python-agent && \
   rm -f /bin/prepare-image.sh
 
