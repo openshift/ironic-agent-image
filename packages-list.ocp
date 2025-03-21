@@ -16,10 +16,10 @@ psmisc
 python3-bcrypt
 python3-dbus
 python3-eventlet
-python3-oslo-concurrency >= 6.1.0-0.20240926153040.248ba64.el9
-python3-oslo-config >= 9.6.0-0.20240926164019.beb7b6c.el9
-python3-oslo-log >= 6.1.2-0.20240926163415.abd5c21.el9
-python3-oslo-service >= 3.5.0-0.20240708131154.a84a9de.el9
+python3-oslo-concurrency >= 7.1.0
+python3-oslo-config >= 9.7.1
+python3-oslo-log >= 7.1.0
+python3-oslo-service >= 4.1.1
 python3-pbr >= 6.0.0-1.el9
 python3-pint
 python3-psutil
