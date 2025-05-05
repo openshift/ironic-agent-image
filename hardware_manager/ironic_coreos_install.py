@@ -22,6 +22,7 @@ from ironic_lib import disk_utils
 from ironic_python_agent import efi_utils
 from ironic_python_agent import errors
 from ironic_python_agent import hardware
+from ironic_python_agent import netutils
 from oslo_log import log
 import tenacity
 
@@ -86,10 +87,6 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         current = current.strip()
         LOG.debug('The current hostname is %s', current)
         if current not in ('localhost', 'localhost.localdomain'):
-            # Regardless of whether the hostname had been previously set or it gets set below
-            # we need to make sure if matches the name when the node boot so always set firstboot
-            # in ignition
-            self._firstboot_hostname = current
             return
 
         new = os.getenv('IPA_DEFAULT_HOSTNAME')
@@ -107,7 +104,6 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         # IPA is run in a container, /etc/hostname is not updated there
         with open('/etc/hostname', 'wt') as fp:
             fp.write(new)
-        self._firstboot_hostname = new
 
     @property
     def dbus(self):
@@ -160,15 +156,19 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
         LOG.info('Succesfully installed using the assisted agent')
 
     def _add_firstboot_hostname_fix(self, ignition):
-        if not self._firstboot_hostname:
+        # Regardless of whether the hostname had been set via DHCP/DNS or in
+        # _fix_hostname, we need to make sure it matches the name when the node
+        # boots, so always set firstboot in ignition.
+        hostname = netutils.get_hostname()
+        if not hostname:
             return ignition
 
         if isinstance(ignition, str):
             ignition = json.loads(ignition)
         elif not ignition:
-            ignition = {}
+            ignition = {"ignition": {"version": "3.0.0"}}
 
-        encoded = urlparse.quote(self._firstboot_hostname)
+        encoded = urlparse.quote(hostname)
 
         files = ignition.setdefault('storage', {}).setdefault('files', [])
         files.append({
