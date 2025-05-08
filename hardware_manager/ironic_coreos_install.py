@@ -279,3 +279,9 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
             LOG.error("coreos-installer failed with code %d", code)
             error = f"coreos-installer failed with code {code}: {last_line}"
             raise errors.DeploymentError(error)
+
+    def erase_devices_metadata(self, node, ports):
+        hardware.dispatch_to_managers('delete_configuration', node, ports)
+        disk_utils.udev_settle()
+        # Fall through
+        raise errors.IncompatibleHardwareMethodError
