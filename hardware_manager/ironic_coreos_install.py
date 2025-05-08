@@ -208,7 +208,23 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
 
         return ignition
 
+    def _try_delete_raid(self, node, ports):
+        if node['automated_clean'] is False:
+            LOG.debug(
+                "Cleaning is disabled, will not try to delete software RAID")
+            return
+
+        LOG.info("Deleting any software RAID devices")
+        try:
+            hardware.dispatch_to_managers('delete_configuration', node, ports)
+        except Exception:
+            LOG.warning("Unable to delete software RAID configuration, "
+                        "deployment may fail", exc_info=True)
+        else:
+            disk_utils.udev_settle()
+
     def install_coreos(self, node, ports):
+        self._try_delete_raid(node, ports)
         root = hardware.dispatch_to_managers('get_os_install_device',
                                              permit_refresh=True)
         configdrive = node['instance_info'].get('configdrive') or {}
