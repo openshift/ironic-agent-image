@@ -18,11 +18,13 @@ from urllib import parse as urlparse
 
 import dbus
 
+from ironic_python_agent import config
 from ironic_python_agent import disk_utils
 from ironic_python_agent import efi_utils
 from ironic_python_agent import errors
 from ironic_python_agent import hardware
 from ironic_python_agent import netutils
+from ironic_python_agent import utils
 from oslo_log import log
 import tenacity
 
@@ -45,6 +47,8 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     _firstboot_hostname = None
     _dbus = None
 
+    # NOTE(dtantsur): this is a standard hardware manager call that is run on
+    # IPA start-up to determine available plugins.
     def evaluate_hardware_support(self):
         try:
             self._fix_hostname()
@@ -53,6 +57,9 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
             raise RuntimeError(f'Failed to update hostname: {exc}')
         return hardware.HardwareSupport.SERVICE_PROVIDER
 
+    # NOTE(dtantsur): this is a standard hardware manager call that is run on
+    # deployment to determine available deploy steps. The steps here refer to
+    # methods on this class.
     def get_deploy_steps(self, node, ports):
         return [
             {
@@ -70,6 +77,27 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
                 'argsinfo': {},
             },
         ]
+
+    # NOTE(dtantsur): this is a standard hardware manager call that is run at
+    # the end of an inspection, a cleaning, or a deployment to collect
+    # additional system logs.
+    def collect_system_logs(self, io_dict, file_list):
+        try:
+            journal = utils.get_command_output(
+                ["journalctl", "--root", ROOT_MOUNT_PATH])
+        except errors.CommandExecutionError:
+            LOG.exception("Could not get journal for the host")
+            raise errors.IncompatibleHardwareMethodError
+
+        # Note: journal is an io.BytesIO object
+        if journal.getbuffer().shape[0] < 50:
+            LOG.error("Abnormally small journalctl output: %s",
+                      journal.getvalue().decode("utf-8", errors="replace"))
+            raise errors.IncompatibleHardwareMethodError
+
+        io_dict["journal"] = journal
+        # Avoid duplicating information: agent logs are in the journal
+        file_list.remove(config.CONF.log_file)
 
     def _fix_hostname(self):
         try:
