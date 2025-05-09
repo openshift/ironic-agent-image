@@ -14,6 +14,7 @@ nvme-cli
 parted
 psmisc
 python3-bcrypt
+python3-cheroot
 python3-dbus
 python3-eventlet
 python3-oslo-concurrency >= 7.1.0
