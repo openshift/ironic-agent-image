@@ -13,22 +13,24 @@ mdadm
 nvme-cli
 parted
 psmisc
-python3-bcrypt
-python3-cheroot
-python3-dbus
-python3-eventlet
-python3-oslo-concurrency >= 7.1.0
-python3-oslo-config >= 9.7.1
-python3-oslo-log >= 7.1.0
-python3-oslo-service >= 4.1.1
-python3-pbr >= 6.0.0-1.el9
-python3-pint
-python3-psutil
-python3-pyudev
-python3-tenacity
-python3-tooz >= 6.3.0-0.20240926164120.734acc4.el9
-python3-webob >= 1.8.8-2.el9
-python3-werkzeug >= 2.2.3-3.el9
-python3-zeroconf >= 0.24.4-2.el9
+python3.12-bcrypt
+python3.12-charset-normalizer
+python3.12-cheroot >= 10.0.1-5.el9
+python3.12-dbus
+python3.12-eventlet >= 0.40.1-1.el9ocp
+python3.12-inotify >= 0.9.6-26.el9ocp
+python3.12-oslo-concurrency >= 7.1.0
+python3.12-oslo-config >= 9.7.1
+python3.12-oslo-log >= 7.1.0
+python3.12-oslo-service >= 4.1.1
+python3.12-pbr >= 6.0.0-1.el9
+python3.12-pint
+python3.12-psutil
+python3.12-pyudev >= 0.22.0-6.1.el9ocp
+python3.12-tenacity
+python3.12-tooz >= 6.3.0-0.20240926164120.734acc4.el9
+python3.12-webob >= 1.8.8-2.el9
+python3.12-werkzeug >= 2.2.3-3.el9
+python3.12-zeroconf >= 0.24.4-2.el9
 qemu-img
 util-linux

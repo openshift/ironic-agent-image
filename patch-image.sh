@@ -21,8 +21,8 @@ do
     git fetch "$PROJ_URL" "$REFSPEC"
     git checkout FETCH_HEAD
 
-    SKIP_GENERATE_AUTHORS=1 SKIP_WRITE_GIT_CHANGELOG=1 python3 setup.py sdist
-    pip3 install --prefix=/usr --no-index --no-deps dist/*.tar.gz
+    SKIP_GENERATE_AUTHORS=1 SKIP_WRITE_GIT_CHANGELOG=1 python3.12 setup.py sdist
+    python3.12 -m pip install --prefix=/usr --no-index --no-deps dist/*.tar.gz
 done < "$patch_file"
 
 cd /
