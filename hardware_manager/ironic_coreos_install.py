@@ -323,3 +323,13 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
             LOG.error("coreos-installer failed with code %d", code)
             error = f"coreos-installer failed with code {code}: {last_line}"
             raise errors.DeploymentError(error)
+
+    # NOTE(dtantsur): this is a standard hardware manager call that is run on
+    # listing devices to filter them.
+    def filter_device(self, device):
+        if (isinstance(device, hardware.NetworkInterface)
+                and device.driver == 'cdc_ether'):
+            LOG.debug("Filtering out USB network device %s", device)
+            return None
+
+        raise errors.IncompatibleHardwareMethodError()
