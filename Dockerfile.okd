@@ -4,23 +4,18 @@ ENV PKGS_LIST=packages-list.okd
 ARG EXTRA_PKGS_LIST
 ARG PATCH_LIST
 
-COPY ${PKGS_LIST}* ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} /tmp/
+COPY ${PKGS_LIST}* ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} python-requirements.okd /tmp/
 COPY prepare-image.sh patch-image.sh /bin/
 
-# Configure OpenStack repos from RDO https://www.rdoproject.org
+# Install Python 3.12 for OKD builds
 RUN dnf upgrade -y && \
-  dnf install -y dnf-plugins-core && \
-  dnf config-manager --enable crb && \
-  curl https://trunk.rdoproject.org/centos9-master/puppet-passed-ci/delorean.repo -o /etc/yum.repos.d/rdo.repo && \
-  curl https://trunk.rdoproject.org/centos9-master/delorean-deps.repo -o /etc/yum.repos.d/rdo-deps.repo
+  dnf install -y python3.12 python3.12-devel
+
+COPY hardware_manager /tmp/hardware_manager
 
 RUN prepare-image.sh && \
   mkdir -p /etc/ironic-python-agent && \
   rm -f /bin/prepare-image.sh
-
-COPY hardware_manager /tmp/hardware_manager
-
-RUN PBR_VERSION=1.0 pip3 install --no-index --verbose --prefix=/usr /tmp/hardware_manager
 
 COPY ironic-python-agent.conf /etc/ironic-python-agent/00-defaults.conf
 
