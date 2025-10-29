@@ -91,29 +91,11 @@ jobs:
     - name: Update requirements.cachito
       if: steps.check-update.outputs.need_update == 'true'
       run: |
-        # Create backup
-        cp requirements.cachito requirements.cachito.bak
-
         # Update the file
         sed -i "s|ironic-python-agent @ git+https://github.com/${{ env.IPA_REPO }}@.*|ironic-python-agent @ git+https://github.com/${{ env.IPA_REPO }}@${{ steps.get-commits.outputs.ipa_hash }}|" requirements.cachito
 
         echo "Updated requirements.cachito:"
         cat requirements.cachito
-
-    - name: Get commit information
-      if: steps.check-update.outputs.need_update == 'true'
-      id: commit-info
-      run: |
-        # Get commit message for the changelog
-        IPA_MSG=""
-
-        if [ "${{ steps.get-commits.outputs.ipa_hash }}" != "${{ steps.current-hashes.outputs.current_ipa }}" ]; then
-          IPA_MSG=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ env.IPA_REPO }}/commits/${{ steps.get-commits.outputs.ipa_hash }}" | \
-            jq -r '.commit.message' | head -n1)
-        fi
-
-        echo "ipa_msg=$IPA_MSG" >> $GITHUB_OUTPUT
 
     - name: Create Pull Request
       if: steps.check-update.outputs.need_update == 'true'
@@ -124,7 +106,7 @@ jobs:
           Update requirements.cachito with latest ironic-python-agent
 
           - ironic-python-agent: ${{ steps.get-commits.outputs.ipa_hash }}
-        title: "chore: Update requirements.cachito with latest ironic-python-agent"
+        title: "NO-ISSUE: Update requirements.cachito with latest ironic-python-agent"
         body: |
           ## Automated Requirements Update
 
@@ -135,7 +117,6 @@ jobs:
           #### ironic-python-agent (${{ env.IPA_REPO }})
           - **Previous**: `${{ steps.current-hashes.outputs.current_ipa }}`
           - **New**: `${{ steps.get-commits.outputs.ipa_hash }}`
-          - **Latest commit**: ${{ steps.commit-info.outputs.ipa_msg }}
           - **Compare**: https://github.com/${{ env.IPA_REPO }}/compare/${{ steps.current-hashes.outputs.current_ipa }}..${{ steps.get-commits.outputs.ipa_hash }}
 
           ### Verification
