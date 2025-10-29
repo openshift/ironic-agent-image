@@ -1,0 +1,166 @@
+name: Update requirements.cachito
+
+on:
+  schedule:
+    # Run Monday, Wednesday, Friday at 1 PM UTC
+    - cron: '0 13 * * 1,3,5'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update even if no changes detected'
+        required: false
+        default: false
+        type: boolean
+      target_branch:
+        description: 'Target branch for the PR'
+        required: false
+        default: 'main'
+        type: string
+
+env:
+  # Repository to track
+  IPA_REPO: "openshift/openstack-ironic-python-agent"
+  # Default branch to track
+  IPA_BRANCH: "main"
+
+jobs:
+  update-requirements:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/centos/centos:stream9
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    - name: Install dependencies
+      run: |
+        dnf upgrade -y
+        dnf install -y git curl jq sed
+
+    - name: Checkout repository
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Set up Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Get latest commit hash
+      id: get-commits
+      run: |
+        # Get latest commit hash from ironic-python-agent repository
+        IPA_HASH=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ env.IPA_REPO }}/commits/${{ env.IPA_BRANCH }}" | \
+          jq -r '.sha')
+
+        echo "ipa_hash=$IPA_HASH" >> $GITHUB_OUTPUT
+
+        echo "Latest ironic-python-agent commit: $IPA_HASH"
+
+    - name: Check current hash in requirements.cachito
+      id: current-hashes
+      run: |
+        # Extract current hash from requirements.cachito
+        CURRENT_IPA=$(grep "ironic-python-agent @ git+" requirements.cachito | sed 's/.*@//' || echo "")
+
+        echo "current_ipa=$CURRENT_IPA" >> $GITHUB_OUTPUT
+
+        echo "Current ironic-python-agent hash: $CURRENT_IPA"
+
+    - name: Check if update is needed
+      id: check-update
+      run: |
+        NEED_UPDATE=false
+
+        if [ "${{ steps.get-commits.outputs.ipa_hash }}" != "${{ steps.current-hashes.outputs.current_ipa }}" ]; then
+          echo "ironic-python-agent hash changed"
+          NEED_UPDATE=true
+        fi
+
+        if [ "${{ github.event.inputs.force_update }}" = "true" ]; then
+          echo "Force update requested"
+          NEED_UPDATE=true
+        fi
+
+        echo "need_update=$NEED_UPDATE" >> $GITHUB_OUTPUT
+
+    - name: Update requirements.cachito
+      if: steps.check-update.outputs.need_update == 'true'
+      run: |
+        # Create backup
+        cp requirements.cachito requirements.cachito.bak
+
+        # Update the file
+        sed -i "s|ironic-python-agent @ git+https://github.com/${{ env.IPA_REPO }}@.*|ironic-python-agent @ git+https://github.com/${{ env.IPA_REPO }}@${{ steps.get-commits.outputs.ipa_hash }}|" requirements.cachito
+
+        echo "Updated requirements.cachito:"
+        cat requirements.cachito
+
+    - name: Get commit information
+      if: steps.check-update.outputs.need_update == 'true'
+      id: commit-info
+      run: |
+        # Get commit message for the changelog
+        IPA_MSG=""
+
+        if [ "${{ steps.get-commits.outputs.ipa_hash }}" != "${{ steps.current-hashes.outputs.current_ipa }}" ]; then
+          IPA_MSG=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ env.IPA_REPO }}/commits/${{ steps.get-commits.outputs.ipa_hash }}" | \
+            jq -r '.commit.message' | head -n1)
+        fi
+
+        echo "ipa_msg=$IPA_MSG" >> $GITHUB_OUTPUT
+
+    - name: Create Pull Request
+      if: steps.check-update.outputs.need_update == 'true'
+      uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: |
+          Update requirements.cachito with latest ironic-python-agent
+
+          - ironic-python-agent: ${{ steps.get-commits.outputs.ipa_hash }}
+        title: "chore: Update requirements.cachito with latest ironic-python-agent"
+        body: |
+          ## Automated Requirements Update
+
+          This PR updates `requirements.cachito` with the latest commit hash from the ironic-python-agent repository.
+
+          ### Changes
+
+          #### ironic-python-agent (${{ env.IPA_REPO }})
+          - **Previous**: `${{ steps.current-hashes.outputs.current_ipa }}`
+          - **New**: `${{ steps.get-commits.outputs.ipa_hash }}`
+          - **Latest commit**: ${{ steps.commit-info.outputs.ipa_msg }}
+          - **Compare**: https://github.com/${{ env.IPA_REPO }}/compare/${{ steps.current-hashes.outputs.current_ipa }}..${{ steps.get-commits.outputs.ipa_hash }}
+
+          ### Verification
+
+          Before merging, please ensure:
+          - The new commits don't introduce breaking changes
+          - The build completes successfully
+          - All tests pass
+
+          ---
+          *This PR was automatically created by the update-requirements workflow.*
+        branch: update-requirements-cachito
+        base: ${{ github.event.inputs.target_branch || 'main' }}
+        delete-branch: true
+        draft: false
+        labels: |
+          automated
+          dependencies
+          cachito
+
+    - name: Summary
+      run: |
+        if [ "${{ steps.check-update.outputs.need_update }}" = "true" ]; then
+          echo "Requirements updated and PR created"
+          echo "- ironic-python-agent: ${{ steps.get-commits.outputs.ipa_hash }}"
+        else
+          echo "No updates needed - hash is current"
+        fi
