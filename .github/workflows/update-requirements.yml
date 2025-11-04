@@ -97,6 +97,16 @@ jobs:
         echo "Updated requirements.cachito:"
         cat requirements.cachito
 
+    - name: Generate compare link
+      if: steps.check-update.outputs.need_update == 'true'
+      id: compare-link
+      run: |
+        if [ -n "${{ steps.current-hashes.outputs.current_ipa }}" ]; then
+          echo "compare_line=- **Compare**: https://github.com/${{ env.IPA_REPO }}/compare/${{ steps.current-hashes.outputs.current_ipa }}..${{ steps.get-commits.outputs.ipa_hash }}" >> $GITHUB_OUTPUT
+        else
+          echo "compare_line=" >> $GITHUB_OUTPUT
+        fi
+
     - name: Create Pull Request
       if: steps.check-update.outputs.need_update == 'true'
       uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
@@ -117,7 +127,7 @@ jobs:
           #### ironic-python-agent (${{ env.IPA_REPO }})
           - **Previous**: `${{ steps.current-hashes.outputs.current_ipa }}`
           - **New**: `${{ steps.get-commits.outputs.ipa_hash }}`
-          - **Compare**: https://github.com/${{ env.IPA_REPO }}/compare/${{ steps.current-hashes.outputs.current_ipa }}..${{ steps.get-commits.outputs.ipa_hash }}
+          ${{ steps.compare-link.outputs.compare_line }}
 
           ### Verification
 
