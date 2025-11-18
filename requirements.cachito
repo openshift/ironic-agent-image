@@ -1,3 +1,3 @@
-ironic-python-agent @ git+https://github.com/openshift/openstack-ironic-python-agent@90ff96b3a98d69f84a6e79aa743862034ae05160
+ironic-python-agent @ git+https://opendev.org/openstack/ironic-python-agent@7d7735a21622ded09e1064fcdecb981009b3927b
 
 # DEPENDENCIES

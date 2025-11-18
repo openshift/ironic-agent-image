@@ -32,7 +32,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
     fi
 
     ### source install ###
-    BUILD_DEPS="git python3.12-devel gcc gcc-c++ python3.12-wheel patch unzip zip"
+    BUILD_DEPS="git python3.12-devel gcc gcc-c++ python3.12-wheel"
 
     # NOTE(elfosardo): wheel is needed because of pip "no-build-isolation" option
     # setting installation of setuptoools here as we may want to remove it
@@ -65,51 +65,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
     # See https://issues.redhat.com/browse/METAL-1049 for more details.
     PIP_SOURCES_DIR="all_sources"
     mkdir $PIP_SOURCES_DIR
-    PIP_SOURCES_DIR_ABS=$(cd $PIP_SOURCES_DIR && pwd)
     python3.12 -m pip download --no-binary=:all: --no-build-isolation --no-deps -r "${REQS}" -d $PIP_SOURCES_DIR
-
-    # Apply improved_reachability patch to downloaded source
-    echo "Applying improved_reachability.patch to ironic-python-agent source..."
-    PIP_SOURCES_ABS=$(cd $PIP_SOURCES_DIR && pwd)
-    IPA_SOURCE=$(find $PIP_SOURCES_DIR -name "ironic-python-agent*" \( -name "*.tar.gz" -o -name "*.zip" \) | head -1)
-    IPA_SOURCE_ABS=$(cd $(dirname "$IPA_SOURCE") && pwd)/$(basename "$IPA_SOURCE")
-    EXTRACT_DIR="/tmp/ipa-extract"
-    mkdir -p $EXTRACT_DIR
-    cd $EXTRACT_DIR
-    if [[ "$IPA_SOURCE" == *.tar.gz ]]; then
-        tar -xzf "$IPA_SOURCE_ABS"
-    elif [[ "$IPA_SOURCE" == *.zip ]]; then
-        unzip -q "$IPA_SOURCE_ABS"
-    fi
-    IPA_DIR=$(find . -maxdepth 1 -type d -name "ironic-python-agent*" | head -1)
-    cd "$IPA_DIR"
-    if patch -p1 --fuzz=3 --ignore-whitespace < /tmp/improved_reachability.patch 2>&1 | tee /tmp/patch-output.log; then
-        echo "Patch applied successfully"
-    else
-        PATCH_EXIT=$?
-        # Check if all hunks succeeded despite the error
-        if grep -q "Hunk.*succeeded" /tmp/patch-output.log && ! grep -q "Hunk.*FAILED" /tmp/patch-output.log; then
-            echo "WARNING: Patch reported error but all hunks applied successfully, continuing..."
-        elif [ $PATCH_EXIT -eq 1 ]; then
-            echo "WARNING: Some patch hunks failed, but continuing..."
-        else
-            echo "ERROR: Patch application failed with exit code $PATCH_EXIT"
-            cat /tmp/patch-output.log
-            exit 1
-        fi
-    fi
-    cd "$PIP_SOURCES_DIR_ABS"
-    rm -f "$IPA_SOURCE"
-    if [[ "$IPA_SOURCE" == *.tar.gz ]]; then
-        tar -czf "$IPA_SOURCE_ABS" -C "$EXTRACT_DIR" "$(basename $IPA_DIR)"
-    elif [[ "$IPA_SOURCE" == *.zip ]]; then
-        cd "$EXTRACT_DIR"
-        zip -q -r "$IPA_SOURCE_ABS" "$(basename $IPA_DIR)"
-        cd "$PIP_SOURCES_DIR_ABS"
-    fi
-    cd /
-    rm -rf $EXTRACT_DIR
-
     python3.12 -m pip install $PIP_OPTIONS --prefix /usr -r "${REQS}" -f $PIP_SOURCES_DIR
 
     # NOTE(janders) since we set --no-compile at install time, we need to
@@ -133,19 +89,19 @@ if [[ -f /tmp/packages-list.okd ]]; then
     # Install OpenStack packages from requirements file
     if [[ -f /tmp/python-requirements.okd ]]; then
         echo "Installing OpenStack packages for Python 3.12 via pip"
-
+        
         # Install build dependencies needed for compiling C extensions (e.g., dbus-python)
         # dbus-devel is already in packages-list.okd, python3.12-devel is in Dockerfile
         BUILD_DEPS="gcc gcc-c++ glib2-devel pkgconfig python3.12-wheel"
         dnf install -y python3.12-pip 'python3.12-setuptools >= 64.0.0' $BUILD_DEPS
-
+        
         python3.12 -m pip install --no-cache-dir --prefix /usr -c https://releases.openstack.org/constraints/upper/master -r /tmp/python-requirements.okd
-
+        
         # Compile Python files for better performance
         python3.12 -m compileall --invalidation-mode=timestamp -q /usr
-
+        
         PBR_VERSION=1.0 python3.12 -m pip install --no-build-isolation --no-index --verbose --prefix=/usr /tmp/hardware_manager
-
+        
         # Remove build dependencies to keep image small
         dnf remove -y $BUILD_DEPS
     fi
