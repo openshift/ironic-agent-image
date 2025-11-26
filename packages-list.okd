@@ -1,4 +1,5 @@
 chrony
+dbus-devel
 device-mapper-multipath
 dosfstools
 efibootmgr
@@ -10,11 +11,8 @@ hdparm
 lshw
 mdadm
 nvme-cli
-openstack-ironic-python-agent
 parted
 psmisc
-python3-dbus
-python3-pip
 qemu-img
 util-linux
 /usr/sbin/udevadm
