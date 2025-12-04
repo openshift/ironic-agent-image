@@ -5,7 +5,7 @@ ARG EXTRA_PKGS_LIST
 ARG PATCH_LIST
 
 COPY ${PKGS_LIST}* ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} python-requirements.okd /tmp/
-COPY prepare-image.sh patch-image.sh /bin/
+COPY prepare-image.sh patch-image.sh setup.okd /bin/
 
 # Install Python 3.12 for OKD builds
 RUN dnf upgrade -y && \

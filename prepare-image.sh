@@ -86,25 +86,7 @@ fi
 
 ### OKD Python 3.12 setup ###
 if [[ -f /tmp/packages-list.okd ]]; then
-    # Install OpenStack packages from requirements file
-    if [[ -f /tmp/python-requirements.okd ]]; then
-        echo "Installing OpenStack packages for Python 3.12 via pip"
-        
-        # Install build dependencies needed for compiling C extensions (e.g., dbus-python)
-        # dbus-devel is already in packages-list.okd, python3.12-devel is in Dockerfile
-        BUILD_DEPS="gcc gcc-c++ glib2-devel pkgconfig python3.12-wheel"
-        dnf install -y python3.12-pip 'python3.12-setuptools >= 64.0.0' $BUILD_DEPS
-        
-        python3.12 -m pip install --no-cache-dir --prefix /usr -c https://releases.openstack.org/constraints/upper/master -r /tmp/python-requirements.okd
-        
-        # Compile Python files for better performance
-        python3.12 -m compileall --invalidation-mode=timestamp -q /usr
-        
-        PBR_VERSION=1.0 python3.12 -m pip install --no-build-isolation --no-index --verbose --prefix=/usr /tmp/hardware_manager
-        
-        # Remove build dependencies to keep image small
-        dnf remove -y $BUILD_DEPS
-    fi
+    setup.okd
 fi
 ###
 
