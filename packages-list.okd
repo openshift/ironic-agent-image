@@ -5,6 +5,7 @@ dosfstools
 efibootmgr
 efivar
 gdisk
+git-core
 ipmitool
 iproute
 hdparm

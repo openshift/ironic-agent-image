@@ -1,2 +1,2 @@
-ironic-python-agent
+git+https://github.com/openshift/openstack-ironic-python-agent
 dbus-python
