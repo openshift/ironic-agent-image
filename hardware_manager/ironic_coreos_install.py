@@ -328,8 +328,8 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
     # listing devices to filter them.
     def filter_device(self, device):
         if (isinstance(device, hardware.NetworkInterface)
-                and device.driver == 'cdc_ether'):
-            LOG.debug("Filtering out USB network device %s", device)
+                and device.driver in ('cdc_ether', 'cdc_ncm')):
+            LOG.warning("Filtering out USB network device %s", device)
             return None
 
         raise errors.IncompatibleHardwareMethodError()
