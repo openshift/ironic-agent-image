@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/ocp/4.21:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.22:base-rhel9
 
 ENV REMOTE_SOURCES=${REMOTE_SOURCES:-"requirements*.cachito"}
 ENV REMOTE_SOURCES_DIR=${REMOTE_SOURCES_DIR:-"/remote_sources_dir/"}
