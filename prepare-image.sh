@@ -8,13 +8,13 @@ echo "tsflags=nodocs" >> /etc/dnf/dnf.conf
 
 dnf upgrade -y
 
-grep -vE '^(#|$)' /tmp/${PKGS_LIST} | xargs -rtd'\n' dnf install -y
+grep -vE '^(#|$)' /tmp/${PKGS_LIST} | xargs -rtd'\n' dnf install -y --nodocs
 if [[ -s /tmp/${PKGS_LIST}-$(arch) ]]; then
-    grep -vE '^(#|$)' /tmp/${PKGS_LIST}-$(arch) | xargs -rtd'\n' dnf install -y
+    grep -vE '^(#|$)' /tmp/${PKGS_LIST}-$(arch) | xargs -rtd'\n' dnf install -y --nodocs
 fi
 if [[ ! -z ${EXTRA_PKGS_LIST:-} ]]; then
     if [[ -s /tmp/${EXTRA_PKGS_LIST} ]]; then
-        grep -vE '^(#|$)' /tmp/${EXTRA_PKGS_LIST} | xargs -rtd'\n' dnf install -y
+        grep -vE '^(#|$)' /tmp/${EXTRA_PKGS_LIST} | xargs -rtd'\n' dnf install -y --nodocs
     fi
 fi
 
@@ -32,12 +32,12 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
     fi
 
     ### source install ###
-    BUILD_DEPS="git python3.12-devel gcc gcc-c++ python3.12-wheel"
+    BUILD_DEPS="python3.12-devel gcc gcc-c++ python3.12-wheel"
 
     # NOTE(elfosardo): wheel is needed because of pip "no-build-isolation" option
     # setting installation of setuptoools here as we may want to remove it
     # in the future once the container build is done
-    dnf install -y python3.12-pip 'python3.12-setuptools >= 64.0.0' $BUILD_DEPS
+    dnf install --nodocs -y python3.12-pip 'python3.12-setuptools >= 64.0.0' $BUILD_DEPS
 
     # NOTE(elfosardo): --no-index is used to install the packages emulating
     # an isolated environment in CI. Do not use the option for downstream
