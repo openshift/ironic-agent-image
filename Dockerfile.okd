@@ -9,7 +9,7 @@ COPY prepare-image.sh patch-image.sh setup.okd /bin/
 
 # Install Python 3.12 for OKD builds
 RUN dnf upgrade -y && \
-  dnf install -y python3.12 python3.12-devel
+  dnf install -y git python3.12 python3.12-devel
 
 COPY hardware_manager /tmp/hardware_manager
 
