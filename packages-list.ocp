@@ -17,7 +17,7 @@ python3.12-bcrypt
 python3.12-charset-normalizer
 python3.12-cheroot >= 10.0.1-5.el9
 python3.12-dbus
-python3.12-eventlet >= 0.40.1-1.el9ocp
+python3.12-eventlet >= 0.40.3-2
 python3.12-inotify >= 0.9.6-26.el9ocp
 python3.12-oslo-concurrency >= 7.1.0
 python3.12-oslo-config >= 9.7.1
