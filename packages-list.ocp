@@ -15,7 +15,7 @@ parted
 psmisc
 python3-bcrypt
 python3-dbus
-python3-eventlet
+python3-eventlet >= 0.33.1-7.el9
 python3-oslo-concurrency >= 6.1.0-0.20240926153040.248ba64.el9
 python3-oslo-config >= 9.6.0-0.20240926164019.beb7b6c.el9
 python3-oslo-log >= 6.1.2-0.20240926163415.abd5c21.el9
