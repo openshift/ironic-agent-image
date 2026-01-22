@@ -15,7 +15,7 @@ parted
 psmisc
 python3-bcrypt
 python3-dbus
-python3-eventlet
+python3-eventlet >= 0.33.1-7.el9
 python3-hardware-detect >= 0.31.0-0.20231026124537.af076d3.el9
 python3-netifaces
 python3-oslo-concurrency
