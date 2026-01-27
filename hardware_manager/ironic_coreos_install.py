@@ -164,10 +164,75 @@ class CoreOSInstallHardwareManager(hardware.HardwareManager):
                 'Check the ramdisk logs for more details.')
         return state in _ACTIVE_STATES
 
+    def _prepare_podman_environment(self):
+        """Prepare podman environment for assisted agent in converged flow.
+
+        In converged flow, the assisted agent runs on the CoreOS ramdisk host
+        which has a read-only root filesystem. When podman starts containers,
+        netavark fails with I/O errors when executed from the read-only
+        /usr/libexec/podman/ location. This appears related to netavark's
+        initialization requiring write access for temporary files or state.
+
+        This method creates a writable tmpfs location for podman helper
+        binaries and configures podman to use it, preventing the I/O errors.
+
+        See: https://issues.redhat.com/browse/OCPBUGS-74487
+        """
+        # Paths on the host (accessed through ROOT_MOUNT_PATH from IPA container)
+        host_writable_bin = os.path.join(ROOT_MOUNT_PATH, 'run', 'podman-helpers')
+        host_containers_conf_dir = os.path.join(ROOT_MOUNT_PATH, 'etc', 'containers')
+        host_containers_conf = os.path.join(host_containers_conf_dir, 'containers.conf')
+        host_podman_libexec = os.path.join(ROOT_MOUNT_PATH, 'usr', 'libexec', 'podman')
+
+        try:
+            # Create writable directory for podman helper binaries on host
+            LOG.info('Creating writable directory for podman helpers at /run/podman-helpers on host')
+            os.makedirs(host_writable_bin, mode=0o755, exist_ok=True)
+
+            # Copy netavark and aardvark-dns to writable location
+            for binary in ['netavark', 'aardvark-dns']:
+                src = os.path.join(host_podman_libexec, binary)
+                dst = os.path.join(host_writable_bin, binary)
+                if os.path.exists(src) and not os.path.exists(dst):
+                    LOG.debug('Copying %s to %s', src, dst)
+                    subprocess.check_call(['cp', '-a', src, dst])
+                    os.chmod(dst, 0o755)
+
+            # Create containers config directory if it doesn't exist
+            os.makedirs(host_containers_conf_dir, mode=0o755, exist_ok=True)
+
+            # Configure podman to use writable helper binaries directory
+            # Note: paths in config are from host perspective, not container
+            config_content = '\n[engine]\nhelper_binaries_dir = ["/run/podman-helpers", "/usr/libexec/podman"]\n'
+
+            if os.path.exists(host_containers_conf):
+                # Append to existing config
+                with open(host_containers_conf, 'r') as f:
+                    existing = f.read()
+                if 'helper_binaries_dir' not in existing:
+                    with open(host_containers_conf, 'a') as f:
+                        f.write(config_content)
+                    LOG.info('Appended podman helper config to /etc/containers/containers.conf on host')
+            else:
+                # Create new config
+                with open(host_containers_conf, 'w') as f:
+                    f.write(config_content)
+                LOG.info('Created podman config at /etc/containers/containers.conf on host')
+
+            LOG.info('Successfully prepared podman environment for assisted agent')
+        except Exception as exc:
+            # Log but don't fail - the agent might still work
+            LOG.warning('Failed to prepare podman environment, assisted agent '
+                       'may fail to start: %s', exc)
+
     def start_assisted_install(self, node, ports):
         if self._is_assisted_running():
             LOG.error(
                 "Assisted Installer Agent should not be active at this stage")
+
+        # Prepare podman environment before starting the assisted agent
+        # to avoid netavark execution failures on read-only filesystems
+        self._prepare_podman_environment()
 
         self.systemd.StartUnit(_ASSISTED_AGENT_UNIT, "fail")
         LOG.info('Triggered installation via the assisted agent')
