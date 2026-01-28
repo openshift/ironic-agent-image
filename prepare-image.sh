@@ -32,7 +32,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
     fi
 
     ### source install ###
-    BUILD_DEPS="git python3.12-devel gcc gcc-c++ python3.12-wheel"
+    BUILD_DEPS="python3.12-devel gcc gcc-c++ python3.12-wheel"
 
     # NOTE(elfosardo): wheel is needed because of pip "no-build-isolation" option
     # setting installation of setuptoools here as we may want to remove it
@@ -70,7 +70,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
 
     # NOTE(janders) since we set --no-compile at install time, we need to
     # compile post-install (see RHEL-29028)
-    python3.12 -m compileall --invalidation-mode=timestamp /usr
+    python3.12 -m compileall --invalidation-mode=timestamp -q -x '/usr/share/doc' /usr
 
     PBR_VERSION=1.0 python3.12 -m pip install --no-build-isolation --no-index --verbose --prefix=/usr /tmp/hardware_manager
 
