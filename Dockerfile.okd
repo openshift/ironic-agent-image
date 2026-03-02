@@ -7,8 +7,11 @@ ARG PATCH_LIST
 COPY ${PKGS_LIST}* ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} python-requirements.okd /tmp/
 COPY prepare-image.sh patch-image.sh setup.okd /bin/
 
-# Install Python 3.12 for OKD builds
-RUN dnf upgrade -y && \
+# Enable CRB and install EPEL for OKD builds
+RUN source /etc/os-release && \
+  dnf config-manager --set-enabled crb && \
+  dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID}.noarch.rpm && \
+  dnf upgrade -y && \
   dnf install -y python3.12 python3.12-devel
 
 COPY hardware_manager /tmp/hardware_manager

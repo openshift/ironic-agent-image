@@ -15,8 +15,9 @@ if [[ -f /tmp/python-requirements.okd ]]; then
     
     # Install build dependencies needed for compiling C extensions (e.g., dbus-python)
     # dbus-devel is already in packages-list.okd, python3.12-devel is in Dockerfile
-    BUILD_DEPS="gcc gcc-c++ glib2-devel pkgconfig python3.12-wheel"
-    dnf install -y python3.12-pip 'python3.12-setuptools >= 64.0.0' $BUILD_DEPS
+    BUILD_DEPS="gcc gcc-c++ glib2-devel pkgconfig"
+    dnf install -y python3.12-pip $BUILD_DEPS
+    python3.12 -m pip install --no-cache-dir 'setuptools >= 70.3'
     
     python3.12 -m pip install --no-cache-dir --prefix /usr -c https://releases.openstack.org/constraints/upper/master -r /tmp/python-requirements.okd
     
