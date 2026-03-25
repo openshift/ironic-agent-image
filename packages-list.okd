@@ -13,7 +13,9 @@ lshw
 mdadm
 nvme-cli
 parted
+podman
 psmisc
 qemu-img
+slirp4netns
 util-linux
 /usr/sbin/udevadm

@@ -12,6 +12,7 @@ lshw
 mdadm
 nvme-cli
 parted
+podman
 psmisc
 python3.12-bcrypt
 python3.12-charset-normalizer
@@ -34,4 +35,5 @@ python3.12-webob >= 1.8.8-2.el9
 python3.12-werkzeug >= 2.2.3-3.el9
 python3.12-zeroconf >= 0.24.4-2.el9
 qemu-img
+slirp4netns
 util-linux
