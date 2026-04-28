@@ -65,7 +65,7 @@ jobs:
       id: current-hashes
       run: |
         # Extract current hash from requirements.cachito
-        CURRENT_IPA=$(grep "ironic-python-agent @ git+" requirements.cachito | sed 's/.*@//' || echo "")
+        CURRENT_IPA=$(grep "^ironic-python-agent @ git+" requirements.cachito | sed 's/.*@//' || echo "")
 
         echo "current_ipa=$CURRENT_IPA" >> $GITHUB_OUTPUT
 
