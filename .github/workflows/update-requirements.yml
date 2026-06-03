@@ -98,6 +98,7 @@ jobs:
         cat requirements.cachito
 
     - name: Create Pull Request
+      id: create-pr
       if: steps.check-update.outputs.need_update == 'true'
       uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
       with:
@@ -144,4 +145,47 @@ jobs:
           echo "- ironic-python-agent: ${{ steps.get-commits.outputs.ipa_hash }}"
         else
           echo "No updates needed - hash is current"
+        fi
+
+    - name: Notify Slack
+      if: always()
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        JOB_STATUS: ${{ job.status }}
+        NEED_UPDATE: ${{ steps.check-update.outputs.need_update }}
+        CURRENT_IPA: ${{ steps.current-hashes.outputs.current_ipa }}
+        IPA_HASH: ${{ steps.get-commits.outputs.ipa_hash }}
+        PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+      run: |
+        if [ -z "${SLACK_WEBHOOK_URL}" ]; then
+          echo "SLACK_WEBHOOK_URL is not set, skipping Slack notification"
+          exit 0
+        fi
+
+        if [ "${JOB_STATUS}" = "success" ]; then
+          if [ "${NEED_UPDATE}" = "true" ]; then
+            TEXT=$(printf '%s\n' \
+              ":white_check_mark: *update-requirements*: opened PR for new ironic-python-agent hash" \
+              "• Previous: \`${CURRENT_IPA}\`" \
+              "• New: \`${IPA_HASH}\`")
+            if [ -n "${PR_URL}" ]; then
+              TEXT=$(printf '%s\n' "${TEXT}" "• PR: ${PR_URL}")
+            fi
+            TEXT=$(printf '%s\n' "${TEXT}" "• Run: ${RUN_URL}")
+          else
+            TEXT=$(printf '%s\n' \
+              ":information_source: *update-requirements*: no update needed (hash is current)" \
+              "• Run: ${RUN_URL}")
+          fi
+        else
+          TEXT=$(printf '%s\n' \
+            ":x: *update-requirements*: workflow failed" \
+            "• Run: ${RUN_URL}")
+        fi
+
+        payload=$(jq -n --arg text "${TEXT}" '{text: $text}')
+        if ! curl -fsSL -X POST -H 'Content-type: application/json' \
+          --data "${payload}" "${SLACK_WEBHOOK_URL}"; then
+          echo "::warning::Failed to post Slack notification (workflow result unchanged)"
         fi
