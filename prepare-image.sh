@@ -36,7 +36,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
 
     # setting installation of setuptoools here as we may want to remove it
     # in the future once the container build is done
-    dnf install -y python3.12-pip 'python3.12-setuptools >= 70.3.0' $BUILD_DEPS
+    dnf install -y python3.12-pip 'python3.12-setuptools >= 78.1.1' $BUILD_DEPS
 
     # NOTE(elfosardo): --no-index is used to install the packages emulating
     # an isolated environment in CI. Do not use the option for downstream
