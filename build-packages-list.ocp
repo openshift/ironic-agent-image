@@ -1,5 +1,9 @@
 gcc
 gcc-c++
 python3.12-devel
+python3.12-packaging >= 24.2
+python3.12-pbr
 python3.12-pip
 python3.12-setuptools >= 78.1.1
+python3.12-setuptools_scm
+python3.12-wheel
