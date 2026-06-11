@@ -32,11 +32,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
     fi
 
     ### source install ###
-    BUILD_DEPS="python3.12-devel gcc gcc-c++"
-
-    # setting installation of setuptoools here as we may want to remove it
-    # in the future once the container build is done
-    dnf install -y python3.12-pip 'python3.12-setuptools >= 78.1.1' $BUILD_DEPS
+    grep -vE '^(#|$)' /tmp/build-packages-list.ocp | xargs -rtd'\n' dnf install -y
 
     # NOTE(elfosardo): --no-index is used to install the packages emulating
     # an isolated environment in CI. Do not use the option for downstream
@@ -73,7 +69,6 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
 
     PBR_VERSION=1.0 python3.12 -m pip install --no-build-isolation --no-index --verbose --prefix=/usr /tmp/hardware_manager
 
-    dnf remove -y $BUILD_DEPS
     rm -fr $PIP_SOURCES_DIR
 
     if [[ -d "${REMOTE_SOURCES_DIR}/cachito-gomod-with-deps" ]]; then

@@ -1,0 +1,5 @@
+gcc
+gcc-c++
+python3.12-devel
+python3.12-pip
+python3.12-setuptools >= 78.1.1
