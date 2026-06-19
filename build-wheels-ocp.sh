@@ -36,6 +36,7 @@ mkdir -p /wheels
 # shellcheck disable=SC2086
 python3.12 -m pip wheel \
     $WHEEL_OPTIONS \
+    --no-index \
     --wheel-dir=/wheels \
     --no-deps \
     --find-links="${PIP_SOURCES_DIR}" \
