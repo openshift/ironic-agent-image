@@ -74,7 +74,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
 
     PBR_VERSION=1.0 python3.12 -m pip install --no-build-isolation --no-index --verbose --prefix=/usr /tmp/hardware_manager
 
-    dnf remove -y $BUILD_DEPS
+    rpm -e --nodeps $BUILD_DEPS
     rm -fr $PIP_SOURCES_DIR
 
     if [[ -d "${REMOTE_SOURCES_DIR}/cachito-gomod-with-deps" ]]; then
@@ -97,9 +97,14 @@ if [[ ! -z ${PATCH_LIST:-} ]]; then
 fi
 rm -f /bin/patch-image.sh
 
+# pip is only needed at build time, remove it to reduce image size
+if [[ -f /tmp/packages-list.ocp ]]; then
+    rpm -e --nodeps python3.12-pip
+fi
+
 # No subscriptions are required (or possible) in this container.
 rpm -q subscription-manager && \
-    dnf remove -y subscription-manager dnf-plugin-subscription-manager || true
+    rpm -e --nodeps subscription-manager dnf-plugin-subscription-manager || true
 
 # Pbr pulls in Git (30+ MiB), but actually only uses it in development context.
 rpm -q git-core && rpm -e --nodeps git-core || true
