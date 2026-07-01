@@ -54,14 +54,14 @@ if [[ ! -z ${PATCH_LIST:-} ]]; then
 fi
 rm -f /bin/patch-image.sh
 
-# pip is only needed at build time, remove it to reduce image size
+# Use rpm -e instead of dnf remove to avoid autoremove of dependencies
+# (microdnf can silently remove packages like iproute and psmisc)
 if [[ -f /tmp/packages-list.ocp ]]; then
-    dnf remove -y python3.12-pip
+    rpm -e --nodeps python3.12-pip
 fi
 
-# No subscriptions are required (or possible) in this container.
 rpm -q subscription-manager && \
-    dnf remove -y subscription-manager dnf-plugin-subscription-manager || true
+    rpm -e --nodeps subscription-manager dnf-plugin-subscription-manager || true
 
 # Pbr pulls in Git (30+ MiB), but actually only uses it in development context.
 rpm -q git-core && rpm -e --nodeps git-core || true
