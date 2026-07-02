@@ -48,7 +48,7 @@ if  [[ -f /tmp/packages-list.ocp ]]; then
 
     #
 
-    dnf remove -y $BUILD_DEPS
+    rpm -e --nodeps $BUILD_DEPS
 
     if [[ -d "${REMOTE_SOURCES_DIR}/cachito-gomod-with-deps" ]]; then
         rm -rf $REMOTE_SOURCES_DIR
@@ -66,7 +66,7 @@ rm -f /bin/patch-image.sh
 
 # No subscriptions are required (or possible) in this container.
 rpm -q subscription-manager && \
-    dnf remove -y subscription-manager dnf-plugin-subscription-manager || true
+    rpm -e --nodeps subscription-manager dnf-plugin-subscription-manager || true
 
 # Pbr pulls in Git (30+ MiB), but actually only uses it in development context.
 rpm -q git-core && rpm -e --nodeps git-core || true
