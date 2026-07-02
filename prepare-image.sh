@@ -54,17 +54,11 @@ if [[ ! -z ${PATCH_LIST:-} ]]; then
 fi
 rm -f /bin/patch-image.sh
 
-# Use rpm -e instead of dnf remove to avoid autoremove of dependencies
-# (microdnf can silently remove packages like iproute and psmisc)
-if [[ -f /tmp/packages-list.ocp ]]; then
-    rpm -e --nodeps python3.12-pip
-fi
-
-rpm -q subscription-manager && \
-    rpm -e --nodeps subscription-manager dnf-plugin-subscription-manager || true
-
-# Pbr pulls in Git (30+ MiB), but actually only uses it in development context.
-rpm -q git-core && rpm -e --nodeps git-core || true
+# Remove build-only and unnecessary packages; rpm -e is used instead of
+# dnf remove to avoid autoremove of dependencies.
+for pkg in python3.12-pip subscription-manager dnf-plugin-subscription-manager git-core; do
+    rpm -e --nodeps "${pkg}" || true
+done
 
 dnf clean all
 rm -rf /var/cache/{yum,dnf}/*
