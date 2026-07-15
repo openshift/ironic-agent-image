@@ -14,28 +14,35 @@ nvme-cli
 parted
 podman
 psmisc
-python3.12-bcrypt
+python3.12-certifi >= 2020.12.5-2.1.el9
 python3.12-charset-normalizer
-python3.12-cheroot >= 10.0.1-5.el9
+python3.12-cryptography >= 41.0.7
+python3.12-dateutil >= 2.7.0
 python3.12-dbus
+python3.12-debtcollector >= 3.0.0-0.20250214185317.0e6ce1c.el9
 python3.12-eventlet >= 0.40.1-1.el9ocp
-python3.12-flexcache >= 0.3-3.el9ocp
-python3.12-flexparser >= 0.4-1.el9ocp
-python3.12-futurist >= 3.2.1-1
+python3.12-fasteners >= 0.7.0
+python3.12-greenlet >= 0.4.15
 python3.12-inotify >= 0.9.6-26.el9ocp
-python3.12-oslo-concurrency >= 7.1.0
-python3.12-oslo-config >= 9.7.1
-python3.12-oslo-log >= 7.1.0
-python3.12-oslo-service >= 4.3.0
-python3.12-pbr >= 6.0.0-1.el9
+python3.12-iso8601 >= 2.1.0-1.el9ocp
+python3.12-jaraco-functools
+python3.12-markupsafe >= 2.1.1-4.el9
+python3.12-more-itertools >= 2.6
+python3.12-msgpack >= 0.6.2-2.el9
+python3.12-oslo-i18n >= 3.15.3
+python3.12-packaging >= 20.4
+python3.12-paste >= 3.5.0-3.el9.1
+python3.12-paste-deploy >= 2.0.1-5.el9
+python3.12-routes >= 2.3.1
 python3.12-pint >= 0.24.4-2.el9ocp
-python3.12-psutil
+python3.12-pyparsing >= 2.1.0
 python3.12-pyudev >= 0.22.0-6.1.el9ocp
-python3.12-tenacity
-python3.12-tooz >= 6.3.0-0.20240926164120.734acc4.el9
-python3.12-webob >= 1.8.8-2.el9
+python3.12-setproctitle >= 1.3.7-1
+python3.12-six >= 1.9.0
+python3.12-typing-extensions >= 4.12.2-2.el9
+python3.12-voluptuous >= 0.11.7-3.1.el9ocp
 python3.12-werkzeug >= 2.2.3-3.el9
-python3.12-zeroconf >= 0.24.4-2.el9
+python3.12-yappi >= 1.0
 qemu-img
 slirp4netns
 util-linux

@@ -1,9 +1,24 @@
+# C/C++ compilers for building Python C extensions (psutil, greenlet, etc.)
 gcc
 gcc-c++
+# Python headers for building C extensions
 python3.12-devel
-python3.12-packaging >= 24.2
+# build backends required by various packages in requirements.cachito
+python3.12-flit-core
+python3.12-hatch-fancy-pypi-readme
+python3.12-hatch-vcs
+python3.12-hatchling >= 1.21.1-1.1.el9ocp
+python3.12-packaging >= 24.2-1.el9ocp
+# used by most OpenStack packages as their build system
 python3.12-pbr
+python3.12-poetry-core
+# pip and wheel for downloading and building wheels
 python3.12-pip
 python3.12-setuptools >= 78.1.1
+# needed by bcrypt 4.x to compile its Rust-based _bcrypt extension
+python3.12-setuptools-rust
 python3.12-setuptools_scm
+# test dependencies pulled in by some OpenStack packages at build time
+python3.12-testresources >= 2.0.1
+python3.12-testscenarios >= 0.5.0
 python3.12-wheel
