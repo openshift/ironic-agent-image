@@ -10,7 +10,7 @@ COPY build-packages-list.ocp /tmp/
 RUN set -euxo pipefail && \
     echo "install_weak_deps=False" >> /etc/dnf/dnf.conf && \
     echo "tsflags=nodocs" >> /etc/dnf/dnf.conf && \
-    xargs -rtd'\n' dnf install -y < /tmp/build-packages-list.ocp
+    grep -v '^#' /tmp/build-packages-list.ocp | xargs -rtd'\n' dnf install -y
 
 # Copy cachito sources
 COPY "$REMOTE_SOURCES" "$REMOTE_SOURCES_DIR"
