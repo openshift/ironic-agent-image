@@ -1,5 +1,4 @@
 chrony
-dbus-devel
 device-mapper-multipath
 dosfstools
 efibootmgr
