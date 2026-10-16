@@ -8,6 +8,7 @@ gdisk
 hdparm
 ipmitool
 iproute
+libselinux-utils
 lshw
 mdadm
 nvme-cli
