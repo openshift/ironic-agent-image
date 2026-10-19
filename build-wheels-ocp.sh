@@ -7,6 +7,10 @@
 
 set -euxo pipefail
 
+# Upgrade hatchling to support PEP 639 license-files table format
+# (system hatchling 1.21.1 from el9ocp is too old for urllib3 >= 2.8.0)
+python3.12 -m pip install --upgrade 'hatchling>=1.24.0'
+
 REQS="${REMOTE_SOURCES_DIR}/requirements.cachito"
 
 # load cachito variables only if they're available
