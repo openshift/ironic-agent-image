@@ -27,6 +27,9 @@ WHEEL_OPTIONS="--no-cache-dir --no-build-isolation --no-index"
 # This is done to allow testing any source code package in CI emulating
 # the cachito downstream build pipeline.
 # See https://issues.redhat.com/browse/METAL-1049 for more details.
+# Upgrade hatchling to support PEP 639 license-files table format
+# (system hatchling 1.21.1 is too old for urllib3 >= 2.8.0)
+python3.12 -m pip install --upgrade 'hatchling>=1.24.0'
 PIP_SOURCES_DIR="/tmp/all_sources"
 mkdir -p "${PIP_SOURCES_DIR}"
 python3.12 -m pip download --no-binary=:all: --no-build-isolation --no-deps -r "${REQS}" -d "${PIP_SOURCES_DIR}"
