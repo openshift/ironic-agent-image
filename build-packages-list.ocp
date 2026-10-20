@@ -9,7 +9,7 @@ python3.12-devel
 python3.12-flit-core
 python3.12-hatch-fancy-pypi-readme
 python3.12-hatch-vcs
-python3.12-hatchling >= 1.27.0
+python3.12-hatchling >= 1.27.0-1.1.el9ocp
 python3.12-packaging >= 24.2-1.el9ocp
 
 # used by most OpenStack packages as their build system
