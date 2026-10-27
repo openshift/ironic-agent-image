@@ -152,11 +152,13 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
         JOB_STATUS: ${{ job.status }}
         NEED_UPDATE: ${{ steps.check-update.outputs.need_update }}
         CURRENT_IPA: ${{ steps.current-hashes.outputs.current_ipa }}
         IPA_HASH: ${{ steps.get-commits.outputs.ipa_hash }}
         PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+        PR_OPERATION: ${{ steps.create-pr.outputs.pull-request-operation }}
       run: |
         if [ -z "${SLACK_WEBHOOK_URL}" ]; then
           echo "SLACK_WEBHOOK_URL is not set, skipping Slack notification"
@@ -165,8 +167,19 @@ jobs:
 
         if [ "${JOB_STATUS}" = "success" ]; then
           if [ "${NEED_UPDATE}" = "true" ]; then
+            if [ "${PR_OPERATION}" = "created" ]; then
+              PR_STATUS="opened a new PR for the requirements.cachito update"
+            elif [ "${PR_OPERATION}" = "updated" ]; then
+              PR_STATUS="updated the existing PR with the requirements.cachito update"
+            elif [ "${PR_OPERATION}" = "closed" ]; then
+              PR_STATUS="closed the existing PR and removed its branch for the requirements.cachito update"
+            elif [ -n "${PR_URL}" ]; then
+              PR_STATUS="the existing PR already has the requirements.cachito update"
+            else
+              PR_STATUS="no PR was opened for the requirements.cachito update"
+            fi
             TEXT=$(printf '%s\n' \
-              ":white_check_mark: *update-requirements*: opened PR for new ironic-python-agent hash" \
+              ":white_check_mark: *${GITHUB_REPOSITORY} update-requirements*: ${PR_STATUS}" \
               "• Previous: \`${CURRENT_IPA}\`" \
               "• New: \`${IPA_HASH}\`")
             if [ -n "${PR_URL}" ]; then
