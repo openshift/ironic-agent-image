@@ -40,5 +40,6 @@ zeroconf===0.147.1
 # This list should be kept as small as possible
 idna===3.10
 ifaddr===0.2.0
+oslo.i18n===6.5.1
 tzdata===2025.2
 urllib3===2.3.0
