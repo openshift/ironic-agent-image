@@ -42,4 +42,4 @@ idna===3.10
 ifaddr===0.2.0
 oslo.i18n===6.5.1
 tzdata===2025.2
-urllib3===2.3.0
+urllib3===2.8.0
