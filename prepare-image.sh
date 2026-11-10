@@ -2,6 +2,9 @@
 
 set -euxo pipefail
 
+. /bin/python-config.sh
+configure_python
+
 echo "install_weak_deps=False" >> /etc/dnf/dnf.conf
 # Tell RPM to skip installing documentation
 echo "tsflags=nodocs" >> /etc/dnf/dnf.conf
@@ -21,12 +24,12 @@ fi
 ### OCP: Install from pre-built wheels (built in wheel-builder stage)
 if [[ -f /tmp/packages-list.ocp ]]; then
 
-    dnf install -y python3.12-pip
+    dnf install -y "${PYTHON_PACKAGE_PREFIX}-pip"
 
     # NOTE(janders): adding --no-compile option to avoid issues in FIPS
     # enabled environments. See https://issues.redhat.com/browse/RHEL-29028
     # for more information
-    python3.12 -m pip install \
+    "${PYTHON_BIN}" -m pip install \
         --no-compile \
         --no-cache-dir \
         --no-index \
@@ -36,7 +39,7 @@ if [[ -f /tmp/packages-list.ocp ]]; then
 
     # NOTE(janders) since we set --no-compile at install time, we need to
     # compile post-install (see RHEL-29028)
-    python3.12 -m compileall --invalidation-mode=timestamp -q -x '/usr/share/doc' /usr
+    "${PYTHON_BIN}" -m compileall --invalidation-mode=timestamp -q -x '/usr/share/doc' /usr
 
 fi
 ###
@@ -56,7 +59,7 @@ rm -f /bin/patch-image.sh
 
 # Remove build-only and unnecessary packages; rpm -e is used instead of
 # dnf remove to avoid autoremove of dependencies.
-for pkg in python3.12-pip subscription-manager dnf-plugin-subscription-manager git-core; do
+for pkg in "${PYTHON_PACKAGE_PREFIX}-pip" subscription-manager dnf-plugin-subscription-manager git-core; do
     rpm -e --nodeps "${pkg}" || true
 done
 

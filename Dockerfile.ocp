@@ -1,6 +1,7 @@
 ## Build Python wheels from cachito sources
 FROM registry.ci.openshift.org/ocp/5.0:base-rhel9 AS wheel-builder
 
+ENV RHEL_MAJOR=9
 ENV REMOTE_SOURCES=${REMOTE_SOURCES:-"requirements*.cachito"}
 ENV REMOTE_SOURCES_DIR=${REMOTE_SOURCES_DIR:-"/remote_sources_dir/"}
 
@@ -20,7 +21,7 @@ COPY "$REMOTE_SOURCES" "$REMOTE_SOURCES_DIR"
 COPY hardware_manager /tmp/hardware_manager
 
 # Build wheels from cachito requirements and hardware_manager
-COPY build-wheels-ocp.sh /bin/
+COPY build-wheels-ocp.sh python-config.sh /bin/
 
 RUN set -euxo pipefail && \
     build-wheels-ocp.sh
@@ -28,12 +29,13 @@ RUN set -euxo pipefail && \
 # build final image
 FROM registry.ci.openshift.org/ocp/5.0:base-rhel9
 
+ENV RHEL_MAJOR=9
 ENV PKGS_LIST=packages-list.ocp
 ARG EXTRA_PKGS_LIST
 ARG PATCH_LIST
 
 COPY ${PKGS_LIST}* ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} /tmp/
-COPY prepare-image.sh patch-image.sh setup.okd /bin/
+COPY prepare-image.sh patch-image.sh setup.okd python-config.sh /bin/
 
 # Install Python packages from pre-built wheels (mounted from wheel-builder stage)
 RUN --mount=from=wheel-builder,source=/wheels,target=/wheels \
