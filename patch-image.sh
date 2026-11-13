@@ -1,6 +1,9 @@
 #!/usr/bin/bash
 set -ex
 
+. /bin/python-config.sh
+configure_python
+
 patch_file="/tmp/${PATCH_LIST}"
 
 while IFS= read -r line
@@ -21,9 +24,8 @@ do
     git fetch "$PROJ_URL" "$REFSPEC"
     git checkout FETCH_HEAD
 
-    SKIP_GENERATE_AUTHORS=1 SKIP_WRITE_GIT_CHANGELOG=1 python3.12 setup.py sdist
-    python3.12 -m pip install --prefix=/usr --no-index --no-deps dist/*.tar.gz
+    SKIP_GENERATE_AUTHORS=1 SKIP_WRITE_GIT_CHANGELOG=1 "${PYTHON_BIN}" setup.py sdist
+    "${PYTHON_BIN}" -m pip install --prefix=/usr --no-index --no-deps dist/*.tar.gz
 done < "$patch_file"
 
 cd /
-

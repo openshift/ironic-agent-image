@@ -1,18 +1,20 @@
 FROM quay.io/centos/centos:stream9
 
+ENV RHEL_MAJOR=9
 ENV PKGS_LIST=packages-list.okd
 ARG EXTRA_PKGS_LIST
 ARG PATCH_LIST
 
 COPY ${PKGS_LIST}* ${EXTRA_PKGS_LIST:-$PKGS_LIST} ${PATCH_LIST:-$PKGS_LIST} python-requirements.okd /tmp/
-COPY prepare-image.sh patch-image.sh setup.okd /bin/
+COPY prepare-image.sh patch-image.sh setup.okd python-config.sh /bin/
 
 # Enable CRB and install EPEL for OKD builds
 RUN source /etc/os-release && \
   dnf config-manager --set-enabled crb && \
   dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID}.noarch.rpm && \
   dnf upgrade -y && \
-  dnf install -y python3.12 && \
+  . /bin/python-config.sh && configure_python && \
+  dnf install -y "${PYTHON_PACKAGE_PREFIX}" && \
   dnf clean all && \
   rm -rf /var/cache/{yum,dnf}/*
 
