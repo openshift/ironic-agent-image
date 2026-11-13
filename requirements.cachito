@@ -11,7 +11,7 @@
 # Note: this will fail CI checks (check-requirements.sh) and the downstream
 # Cachito build pipeline, so revert before submitting a PR.
 
-ironic-python-agent @ git+https://github.com/openshift/openstack-ironic-python-agent@2bda6abf8a8ed61338ce95d497b3c14553321343
+ironic-python-agent @ git+https://github.com/openshift/openstack-ironic-python-agent@0ade41bfc9f606cd3178095bca1962944273b801
 
 # DIRECT DEPENDENCIES
 bcrypt===4.3.0
