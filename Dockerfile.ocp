@@ -1,7 +1,6 @@
 ## Build Python wheels from cachito sources
 FROM registry.ci.openshift.org/ocp/5.0:base-rhel9 AS wheel-builder
 
-ENV RHEL_MAJOR=9
 ENV REMOTE_SOURCES=${REMOTE_SOURCES:-"requirements*.cachito"}
 ENV REMOTE_SOURCES_DIR=${REMOTE_SOURCES_DIR:-"/remote_sources_dir/"}
 
@@ -29,7 +28,6 @@ RUN set -euxo pipefail && \
 # build final image
 FROM registry.ci.openshift.org/ocp/5.0:base-rhel9
 
-ENV RHEL_MAJOR=9
 ENV PKGS_LIST=packages-list.ocp
 ARG EXTRA_PKGS_LIST
 ARG PATCH_LIST
