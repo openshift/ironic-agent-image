@@ -45,3 +45,23 @@ configure_python()
     PYTHON_PACKAGE_PREFIX="python${PYTHON_VERSION}"
     export PYTHON_VERSION PYTHON_BIN PYTHON_PACKAGE_PREFIX
 }
+
+render_package_list()
+{
+    if [[ $# -ne 2 ]]; then
+        echo "ERROR: ${FUNCNAME[0]}: usage: render_package_list TEMPLATE OUTPUT" >&2
+        return 1
+    fi
+
+    local template="$1" output="$2"
+    if [[ ! -r "${template}" ]]; then
+        echo "ERROR: cannot read package-list template ${template}" >&2
+        return 1
+    fi
+
+    sed "s/@PYTHON_PACKAGE_PREFIX@/${PYTHON_PACKAGE_PREFIX}/g" "${template}" > "${output}" || return 1
+    if grep -Fq '@PYTHON_PACKAGE_PREFIX@' "${output}"; then
+        echo "ERROR: unresolved Python package prefix in ${template}" >&2
+        return 1
+    fi
+}

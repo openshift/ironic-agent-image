@@ -1,31 +1,32 @@
+# `@PYTHON_PACKAGE_PREFIX@` is rendered from the base image before DNF runs.
 # C/C++ compilers for building Python C extensions (psutil, greenlet, etc.)
 gcc
 gcc-c++
 
 # Python headers for building C extensions
-python3.12-devel
+@PYTHON_PACKAGE_PREFIX@-devel
 
 # build backends required by various packages in requirements.cachito
-python3.12-flit-core
-python3.12-hatch-fancy-pypi-readme
-python3.12-hatch-vcs
-python3.12-hatchling >= 1.27.0-1.1.el9ocp
-python3.12-packaging >= 24.2-2.el9ocp
+@PYTHON_PACKAGE_PREFIX@-flit-core
+@PYTHON_PACKAGE_PREFIX@-hatch-fancy-pypi-readme
+@PYTHON_PACKAGE_PREFIX@-hatch-vcs
+@PYTHON_PACKAGE_PREFIX@-hatchling >= 1.27.0
+@PYTHON_PACKAGE_PREFIX@-packaging >= 24.2
 
 # used by most OpenStack packages as their build system
-python3.12-pbr
-python3.12-poetry-core
+@PYTHON_PACKAGE_PREFIX@-pbr
+@PYTHON_PACKAGE_PREFIX@-poetry-core
 
 # pip and wheel for downloading and building wheels
-python3.12-pip
-python3.12-setuptools >= 78.1.1
+@PYTHON_PACKAGE_PREFIX@-pip
+@PYTHON_PACKAGE_PREFIX@-setuptools >= 78.1.1
 
 # needed by bcrypt 4.x to compile its Rust-based _bcrypt extension
 cargo
-python3.12-setuptools-rust >= 1.9.0
-python3.12-setuptools_scm
+@PYTHON_PACKAGE_PREFIX@-setuptools-rust >= 1.9.0
+@PYTHON_PACKAGE_PREFIX@-setuptools_scm
 
 # test dependencies pulled in by some OpenStack packages at build time
-python3.12-testresources >= 2.0.1
-python3.12-testscenarios >= 0.5.0
-python3.12-wheel
+@PYTHON_PACKAGE_PREFIX@-testresources >= 2.0.1
+@PYTHON_PACKAGE_PREFIX@-testscenarios >= 0.5.0
+@PYTHON_PACKAGE_PREFIX@-wheel

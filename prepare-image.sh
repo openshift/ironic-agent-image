@@ -11,13 +11,21 @@ echo "tsflags=nodocs" >> /etc/dnf/dnf.conf
 
 dnf upgrade -y
 
-grep -vE '^(#|$)' /tmp/${PKGS_LIST} | xargs -rtd'\n' dnf install -y
-if [[ -s /tmp/${PKGS_LIST}-$(arch) ]]; then
-    grep -vE '^(#|$)' /tmp/${PKGS_LIST}-$(arch) | xargs -rtd'\n' dnf install -y
+package_list="/tmp/${PKGS_LIST}"
+rendered_package_list="${package_list}.rendered"
+render_package_list "${package_list}" "${rendered_package_list}"
+grep -vE '^(#|$)' "${rendered_package_list}" | xargs -rtd'\n' dnf install -y
+arch_package_list="${package_list}-$(arch)"
+if [[ -s "${arch_package_list}" ]]; then
+    rendered_arch_package_list="${arch_package_list}.rendered"
+    render_package_list "${arch_package_list}" "${rendered_arch_package_list}"
+    grep -vE '^(#|$)' "${rendered_arch_package_list}" | xargs -rtd'\n' dnf install -y
 fi
 if [[ ! -z ${EXTRA_PKGS_LIST:-} ]]; then
     if [[ -s /tmp/${EXTRA_PKGS_LIST} ]]; then
-        grep -vE '^(#|$)' /tmp/${EXTRA_PKGS_LIST} | xargs -rtd'\n' dnf install -y
+        rendered_extra_pkgs_list="/tmp/${EXTRA_PKGS_LIST}.rendered"
+        render_package_list "/tmp/${EXTRA_PKGS_LIST}" "${rendered_extra_pkgs_list}"
+        grep -vE '^(#|$)' "${rendered_extra_pkgs_list}" | xargs -rtd'\n' dnf install -y
     fi
 fi
 
