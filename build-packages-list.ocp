@@ -3,6 +3,9 @@
 gcc
 gcc-c++
 
+# needed by pip to fetch packages from git URLs
+git-core
+
 # Python headers for building C extensions
 @PYTHON_PACKAGE_PREFIX@-devel
 
