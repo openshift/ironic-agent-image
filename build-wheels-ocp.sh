@@ -10,6 +10,11 @@ set -euxo pipefail
 . /bin/python-config.sh
 configure_python
 
+# PyO3 0.23.5 (used by bcrypt 4.3.0) needs ABI3 forward compatibility for Python 3.14.
+if [[ "${PYTHON_VERSION}" == "3.14" ]]; then
+    export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
+fi
+
 REQS="${REMOTE_SOURCES_DIR}/requirements.cachito"
 
 # load cachito variables only if they're available
